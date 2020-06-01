@@ -77,7 +77,7 @@ For this program we follow a 3 step process to the work flow:
 
 The goal of this stage is to remove background noise and any containers from the scan so only the desired object remains, as shown here:
 
-![Data Seg](/images/DataSeg.png) 
+![The Goal and the orignal data](/images/BeforeAfterSeg.png) 
 
 Note these stages are optional, if the data is preprocessed or if you think the stage is unnecessary for your date. However, due to its scripting if you are not using that stage set the slider to 0. These value will also change on a case by case baises, such as if you have a high or low contrast set, or base scan settings.
 
@@ -85,7 +85,7 @@ Note these stages are optional, if the data is preprocessed or if you think the 
 
 Cel-shading groups values within a range of multiple, e.g. a Cel-shade of 10 would mean all value are rounded to the nearest multiple of 10. As the amount of value can be difficult to track by eye we apply this method to help users make a desion of which threshold value to implement. You can view how Cel-Shading looks on the current layer by checking the **View Cel Image** check box. For the test smaple we use a value of 40, to adjust the value use the **Cel Base Value** slider. T then apply this to the whole stack use the **Apply Cel-Shade** button.
 
-![A Cel-Shaded Image](/images/CelComp.png) 
+![A Cel-Shaded Image](/images/Cel-Image.png) 
 
 ##### Stage 1.2: Thresholding
 
@@ -110,28 +110,25 @@ This stage allows the user to input CSV file to allow the exported data to be la
 To correctly label the blob we neet to identify how many and the center of trays in the images stack. This is done by using the 
 **Apply Traying** button. This looks for the most dense layers to define a middle and gaps where no blob is present to define a gape between trays. Once this is done the far right image will show blue lines representing the "middle" of each tray. In-additon the left list box will have a list of the available tray layers. Note if a layer is incorrect you can click the layer in the list box and use **Delete Tray** to remove, Similarly you can add trays manually by scolling to the layer in the left most window and using the **Add tray** button. 
 
-![Stacks Layered](/images/Layered.png)
+![Stacks Layered](/images/TrayLines.png)
 
 ##### Stage 2.2 Loading CSVs 
 
 We use a block based approach for labeling the blobs, so a csv is a natural choice. Microsoft excel can be used to export the csv and an example is with the test data, names should be alphabetical and can include numbe, but without special characters.
 
 To load the CSVs use the **Load CSV** button on the far right. A file browser will appear, choose each CSV file in order from the highest to the lowest in the stack, by selecting the CSV and **Select File** and a new browser will appear foreach CSV. 
-![Load CSV Menu](/images/CSVMenu.png)
 
 If this stage is successful, when scrolling through the left most image green grids will appear over the image. The grid will also have the four corner points labeled to easily identify how to orienate the trays. 
 
 ##### Stage 2.3 Aligning the trays 
 
-![Before Alignment](/images/BeforeAlignment.png)
-
 Trays will all share an the centre X,Y and rotation as we assume the trays are stacked. To move the centre if the trays use the **Grid centre X** and **Grid centre Y**. The rotation should then be adjusted using the **Rotate Tray** slider. Then each tray should be individually scaled using the **Scale Tray Horizontal** and **Scale Tray Vertical** to allow the blobs to be centred in each grid square. 
 
-![After Alignment](/images/AfterAlignment.png)
+![After Alignment](/images/labels.png)
 
 If the image is mirrored as some scanner do, you can use the functions **Flip Trays Horizontal** and **Flip Trays Vertical** int the **Edit** menu to flip the grid to enable the labels to match. 
 
-![Edit Menu](/images/EditMenu.png)
+![Edit Menu](/images/FlipEdit.png)
 
 #### Stage 3: exporting
 
