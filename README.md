@@ -124,6 +124,8 @@ If this stage is successful, when scrolling through the left most image green gr
 
 Trays will all share an the centre X,Y and rotation as we assume the trays are stacked. To move the centre if the trays use the **Grid centre X** and **Grid centre Y**. The rotation should then be adjusted using the **Rotate Tray** slider. Then each tray should be individually scaled using the **Scale Tray Horizontal** and **Scale Tray Vertical** to allow the blobs to be centred in each grid square. 
 
+For the sample data center we use (X) 122 (Y) 184 and a scale of 157 Horizontal and 93 vertical for the top and 102 vertical for the bottom. 
+
 ![After Alignment](/images/labels.png)
 
 If the image is mirrored as some scanner do, you can use the functions **Flip Trays Horizontal** and **Flip Trays Vertical** int the **Edit** menu to flip the grid to enable the labels to match. 
