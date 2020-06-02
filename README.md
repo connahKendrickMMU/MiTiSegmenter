@@ -32,7 +32,7 @@ We use spyder with anaconda to launch the code.
 
 ## Using MiTiSegmentor
 
-Uing the MitiSegmentor is easy once you follow the workflow provided. This guide provides step by step instructions on using the system as intended. We provide a smaple dataset with this for you to try the system, which can be found at: *****
+Uing the MitiSegmentor is easy once you follow the workflow provided. This guide provides step by step instructions on using the system as intended. We provide a sample dataset with this for you to try the system, which can be found at: [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
 
 ### Loading Data 
 
