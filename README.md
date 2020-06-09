@@ -10,7 +10,7 @@ We provide two option to using the software a prebuilt .exe or the raw code (pyt
 
 We have prebuilt the program to allow it to run on any windows-based machine, without the requirement of python. We cannot guarantee functionality on other operating systems. 
 
-The file can be downloaded at: ***** 
+The file can be downloaded at: [Dropbox](https://www.dropbox.com/s/li05t2crauobu24/MiTiSegmentor.exe?dl=0)
 
 To launch simply double click as with any application. 
 
