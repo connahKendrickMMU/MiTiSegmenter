@@ -1,6 +1,6 @@
-# MiTiSegmentor
+# MiTiSegmenter
 
-MiTiSegmentor is open-source software for the process of CT data to extract and generate 3D models from the scan while removing the containers. If you use the MiTiSegmentor for part of your work, please cite our paper: *****
+MiTiSegmenter is open-source software for the process of CT data to extract and generate 3D models from the scan while removing the containers. If you use the MiTiSegmenter for part of your work, please cite our paper: *****
 
 ## Retrieving the code
 
@@ -10,7 +10,7 @@ We provide two option to using the software a prebuilt .exe or the raw code (pyt
 
 We have prebuilt the program to allow it to run on any windows-based machine, without the requirement of python. We cannot guarantee functionality on other operating systems. 
 
-The file can be downloaded at: [Dropbox](https://www.dropbox.com/s/li05t2crauobu24/MiTiSegmentor.exe?dl=0)
+The file can be downloaded at: [Dropbox](https://www.dropbox.com/s/li05t2crauobu24/MiTiSegmenter.exe?dl=0)
 
 To launch simply double click as with any application. 
 
@@ -30,9 +30,9 @@ The code requires:
 * Skimage 0.16.2 
 We use spyder with anaconda to launch the code.
 
-## Using MiTiSegmentor
+## Using MiTiSegmenter
 
-Using the MiTiSegmentor is easy once you follow the workflow provided. This guide provides step by step instructions on using the system as intended. We provide a sample dataset with this for you to try the system, which can be found at [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
+Using the MiTiSegmenter is easy once you follow the workflow provided. This guide provides step by step instructions on using the system as intended. We provide a sample dataset with this for you to try the system, which can be found at [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
 
 ### Loading Data 
 
