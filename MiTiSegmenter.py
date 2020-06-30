@@ -46,6 +46,7 @@ class ScanOBJGenerator(Tk):
         self.TR = 0
         self.BL = 0
         self.BR = 0
+        self.blobbed = False
     def init_GUI(self):
         #main window title and size
         self.title("MiTiSegmenter") 
@@ -312,6 +313,7 @@ class ScanOBJGenerator(Tk):
         self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)  
         self.viewThresholdVar.set(0)
         self.viewThresholdCheck.config(state="disabled")
+        self.blobbed = True
         self.refreshImages()
     
     def organiseBlobs(self, unique): 
@@ -516,7 +518,9 @@ class ScanOBJGenerator(Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.threshold,self.cellBase)
-        temp = cv.resize(temp,self.imgFrontSize)  
+        temp = cv.resize(temp,self.imgFrontSize) 
+        if self.blobbed == True:
+            temp[temp >= 1] = 255
         temp = Image.fromarray(temp) 
         self.imgFront = ImageTk.PhotoImage(image=temp) 
         self.panalFront.configure(image=self.imgFront) 
@@ -527,7 +531,9 @@ class ScanOBJGenerator(Tk):
         temp = self.imageStack[:,int(val)-1,:].astype('uint8')
         temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.threshold,self.cellBase)
         temp = cv.resize(temp,self.imgSideSize)
-        temp = Image.fromarray(temp) 
+        if self.blobbed == True:
+            temp[temp >= 1] = 255
+        temp = Image.fromarray(temp)  
         self.imgSide = ImageTk.PhotoImage(image=temp) 
         self.panalSide.configure(image=self.imgSide) 
         self.panalSide.image = self.imgSide
@@ -593,7 +599,9 @@ class ScanOBJGenerator(Tk):
         temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.threshold,self.cellBase)
         temp = self.putGridOnImage(temp,val)                
         temp = cv.resize(temp,self.imgTopSize)  
-        temp = Image.fromarray(temp) 
+        if self.blobbed == True:
+            temp[temp >= 1] = 255
+        temp = Image.fromarray(temp)  
         self.imgTop = ImageTk.PhotoImage(image=temp)  
         self.panalTop.configure(image=self.imgTop) 
         self.panalTop.image = self.imgTop
@@ -706,6 +714,7 @@ class ScanOBJGenerator(Tk):
             # file loading canceled
             return
         print("loading images")
+        self.blobbed = False
         self.imageStack = None 
         paths = os.listdir(path) 
         self.workingPath = path
