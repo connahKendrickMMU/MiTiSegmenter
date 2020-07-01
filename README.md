@@ -174,4 +174,5 @@ We have limited available to time work on improving the software. However, we ha
 * Switch to VTK background to allow more diverse file outputs. 
 * Add option for input down sampling size.
 * Add an option to auto tray separation. 
-* Auto segmentation to remove human interaction
+* Auto segmentation to remove human interaction.
+* Add multi-colour for the difference blobs.
