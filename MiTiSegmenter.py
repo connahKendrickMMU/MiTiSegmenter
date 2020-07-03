@@ -22,7 +22,8 @@ class ScanOBJGenerator(Tk):
     # initialisation 
     def __init__(self): 
         super().__init__()  
-        self.threshold = 40  
+        self.thresholdMax = 40  
+        self.thresholdMin = 0
         self.blobMinSizeVal = 50
         self.downsampleFactor = 4
         self.cellBase = 40
@@ -30,7 +31,7 @@ class ScanOBJGenerator(Tk):
         self.imgTopSize = (0,0) 
         self.imgSideSize = (0,0) 
         self.imgFrontSize = (0,0) 
-        self.maxSize =self.winfo_screenwidth()//3 
+        self.maxSize = self.winfo_screenwidth()//3 
         self.gridSize = (0,0)
         self.gridCenter = (0,0)
         self.gridRotation = 0
@@ -77,12 +78,16 @@ class ScanOBJGenerator(Tk):
         self.topBar = None 
         
         # thresholding          
-        self.thresholdBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustThreshold) 
+        self.thresholdBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Max", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustThresholdMax) 
         self.thresholdBar.grid(row=3,column=0,sticky = W) 
-        self.thresholdBar.set(self.threshold)
+        self.thresholdBar.set(self.thresholdMax) 
+        
+        self.thresholdBarMin = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Min", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustThresholdMin) 
+        self.thresholdBarMin.grid(row=4,column=0,sticky = W) 
+        self.thresholdBarMin.set(self.thresholdMin)
         
         self.viewThresholdCheck = Checkbutton(self,text="View Threshold Image", variable = self.viewThresholdVar, command=self.refreshImages) 
-        self.viewThresholdCheck.grid(row=4, column = 0, sticky = NE)  
+        self.viewThresholdCheck.grid(row=5, column = 0, sticky = NE)  
           
         self.applyThresholdBtn = Button(self,text="Apply Threshold",command=self.applyThreshold)
         self.applyThresholdBtn.grid(row=3,column=0,sticky = E) 
@@ -128,14 +133,14 @@ class ScanOBJGenerator(Tk):
         
         # blobing 
         self.removeDensity = Button(self,text="Remove Blob Interior", command=self.removeblobDensity) 
-        self.removeDensity.grid(row=4, column = 0, sticky = NW)
+        self.removeDensity.grid(row=5, column = 0, sticky = NW)
         
         self.blobMinSize = Scale(self, from_=0, to=100, orient=HORIZONTAL, label="Min Blob Size", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.minBlobSize)
-        self.blobMinSize.grid(row=5, column = 0, sticky = W) 
+        self.blobMinSize.grid(row=6, column = 0, sticky = W) 
         self.blobMinSize.set(self.blobMinSizeVal)
         
         self.blobImage = Button(self,text="Seperate the Blobs", command=self.blobDetection)
-        self.blobImage.grid(row=5, column = 0, sticky= E)
+        self.blobImage.grid(row=6, column = 0, sticky= E)
         
         self.cellBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
@@ -208,30 +213,44 @@ class ScanOBJGenerator(Tk):
             infoFile.close()
         
     def applyTray(self):  
-        trayCount = 0
+        #trayCount = 0
         onTray = False
         self.layers = [] 
         self.listboxValues.delete(0,self.listboxValues.size())
-        maxValue = 0
-        layer = 0
-        loopRate = self.downsampleFactor
-        if loopRate == 0: 
-            loopRate = 1
-        for i in range(0,self.imageStack.shape[0],loopRate): 
-            temp = self.imageStack[i,:,:].astype('uint8')
-            #print(np.where(temp>0)[0].shape) 
-            if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10: 
+        #maxValue = 0
+        #layer = 0
+        trayStart = 0
+        trayCount = 0
+        #loopRate = self.downsampleFactor
+        #if loopRate == 0: 
+            #loopRate = 1
+        for i in range(0,self.imageStack.shape[0]): 
+            temp = self.imageStack[i,:,:].astype('uint8') 
+            if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10:
                 if onTray == False: 
                     onTray = True
-                    trayCount = trayCount + 1 
-                if np.where(temp>0)[0].shape[0] > maxValue: 
-                    maxValue = np.where(temp>0)[0].shape[0]
-                    layer = i
-            elif onTray == True: 
-                self.layers.append(layer) 
-                layer = 0 
-                maxValue = 0
-                onTray = False 
+                    trayStart = i 
+                else: 
+                    trayCount = trayCount+1 
+            else: 
+                if onTray == True: 
+                    onTray = False 
+                    self.layers.append(trayStart + (trayCount//2))
+                    trayStart = 0
+                    trayCount = 0
+            #print(np.where(temp>0)[0].shape) 
+            # if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10: 
+            #     if onTray == False: 
+            #         onTray = True
+            #         trayCount = trayCount + 1 
+            #     if np.where(temp>0)[0].shape[0] > maxValue: 
+            #         maxValue = np.where(temp>0)[0].shape[0]
+            #         layer = i
+            # elif onTray == True: 
+            #     self.layers.append(layer) 
+            #     layer = 0 
+            #     maxValue = 0
+            #     onTray = False 
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
@@ -269,8 +288,18 @@ class ScanOBJGenerator(Tk):
         self.cellBase = int(val) 
         self.refreshImages()
     
-    def adjustThreshold(self,val): 
-        self.threshold = int(val)
+    def adjustThresholdMax(self,val):
+        if int(val) <= self.thresholdMin: 
+            self.thresholdBar.set(self.thresholdMin+1) 
+        else:
+            self.thresholdMax = int(val)
+        self.refreshImages() 
+        
+    def adjustThresholdMin(self,val):
+        if int(val) >= self.thresholdMin:
+            self.thresholdBarMin.set(self.thresholdMax-1)
+        else:
+            self.thresholdMin = int(val)
         self.refreshImages()
         
     def adjustGridRotation(self,val):
@@ -293,7 +322,8 @@ class ScanOBJGenerator(Tk):
     def applyThreshold(self): 
         if self.imageStack is None: 
             return
-        self.imageStack[self.imageStack <= self.threshold] = 0  
+        self.imageStack[self.imageStack <= self.thresholdMin] = 0    
+        self.imageStack[self.imageStack >= self.thresholdMax] = 0 
         self.viewThresholdVar.set(0) 
         self.usedThres = (1,self.usedThres[1])
         self.refreshImages()
@@ -392,9 +422,9 @@ class ScanOBJGenerator(Tk):
                  infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
                  img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
                  if imType == 1: #processed 
-                     img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.threshold,self.cellBase)#self.processSingleTray(img) 
+                     img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.processSingleTray(img) 
                  elif imType == 2: # segmentation 
-                     img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.threshold,self.cellBase)#img * (self.processSingleTray(img)//255)
+                     img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#img * (self.processSingleTray(img)//255)
                      img[img >= 1] = 255
                  cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
             infoFile.close()
@@ -500,14 +530,15 @@ class ScanOBJGenerator(Tk):
          end = time.perf_counter()
          print(end - start)
          
-    def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thres, cell):
+    def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell):
         #if downSample: 
             #img = np.delete(img,list(range(0,img.shape[0],downFactor)),axis=0) 
             #print("no downsample anymore")
         if viewCell == 1: 
            img = img-(img%cell)
         if viewThres == 1: 
-            img[img <= thres] = 0  
+            img[img >= thresMax] = 0   
+            img[img <= thresMin] = 0
         return img
     
     def frontSlider(self,val): 
@@ -517,7 +548,7 @@ class ScanOBJGenerator(Tk):
 
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.threshold,self.cellBase)
+        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = cv.resize(temp,self.imgFrontSize) 
         if self.blobbed == True:
             temp[temp >= 1] = 255
@@ -529,7 +560,7 @@ class ScanOBJGenerator(Tk):
     
     def sideSlider(self,val): 
         temp = self.imageStack[:,int(val)-1,:].astype('uint8')
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.threshold,self.cellBase)
+        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = cv.resize(temp,self.imgSideSize)
         if self.blobbed == True:
             temp[temp >= 1] = 255
@@ -596,7 +627,7 @@ class ScanOBJGenerator(Tk):
         # left image
         temp = self.imageStack[int(val)-1,:,:].astype('uint8') 
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.threshold,self.cellBase)
+        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,val)                
         temp = cv.resize(temp,self.imgTopSize)  
         if self.blobbed == True:
