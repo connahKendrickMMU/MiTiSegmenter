@@ -296,7 +296,7 @@ class ScanOBJGenerator(Tk):
         self.refreshImages() 
         
     def adjustThresholdMin(self,val):
-        if int(val) >= self.thresholdMin:
+        if int(val) >= self.thresholdMax:
             self.thresholdBarMin.set(self.thresholdMax-1)
         else:
             self.thresholdMin = int(val)
