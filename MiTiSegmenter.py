@@ -22,8 +22,8 @@ class ScanOBJGenerator(Tk):
     # initialisation 
     def __init__(self): 
         super().__init__()  
-        self.thresholdMax = 40  
-        self.thresholdMin = 0
+        self.thresholdMax = 255  
+        self.thresholdMin = 40
         self.blobMinSizeVal = 50
         self.downsampleFactor = 4
         self.cellBase = 40
@@ -338,7 +338,9 @@ class ScanOBJGenerator(Tk):
     def blobDetection(self): 
         if self.imageStack is None:
             return  
-        self.imageStack[self.imageStack >= self.threshold] = 255 
+        self.imageStack[self.imageStack <= self.thresholdMin] = 0    
+        self.imageStack[self.imageStack >= self.thresholdMax] = 0
+        self.imageStack[self.imageStack != 0] = 255 
         self.imageStack = measure.label(self.imageStack) 
         self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)  
         self.viewThresholdVar.set(0)
