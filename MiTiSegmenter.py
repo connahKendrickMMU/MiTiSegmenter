@@ -11,13 +11,15 @@ import open3d as o3d
 import pandas as pd
 import shutil
 import time
+import pkg_resources.py2_warn 
 
 # our files
 from PopUpClasses import *
 
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
-
+####### Build exe ####### 
+# need add path to dask.yaml and distribution.yaml in you python Lib/site-packages/(dask or distribution)
 class ScanOBJGenerator(Tk): 
     # initialisation 
     def __init__(self): 
