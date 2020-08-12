@@ -2,7 +2,8 @@ from tkinter import filedialog
 from tkinter import * 
 from PIL import Image, ImageTk  
 from tkinter.messagebox import showinfo 
-from skimage import measure, morphology 
+from skimage import measure, morphology  
+from numpy import genfromtxt
 import math
 import numpy as np  
 import cv2 as cv
@@ -25,10 +26,10 @@ class ScanOBJGenerator(Tk):
     def __init__(self): 
         super().__init__()  
         self.thresholdMax = 255  
-        self.thresholdMin = 40
+        self.thresholdMin = 0
         self.blobMinSizeVal = 50
         self.downsampleFactor = 4
-        self.cellBase = 40
+        self.cellBase = 1
         self.usedThres =(0,0)
         self.imgTopSize = (0,0) 
         self.imgSideSize = (0,0) 
@@ -37,8 +38,8 @@ class ScanOBJGenerator(Tk):
         self.gridSize = (0,0)
         self.gridCenter = (0,0)
         self.gridRotation = 0
-        self.viewThresholdVar = IntVar() 
-        self.viewCellVar = IntVar()
+        self.viewThresholdVar = 1#IntVar() 
+        self.viewCellVar = 1 #IntVar()
         self.layers = []
         self.traySize = 50
         self.trayCSV = [] 
@@ -53,7 +54,7 @@ class ScanOBJGenerator(Tk):
     def init_GUI(self):
         #main window title and size
         self.title("MiTiSegmenter") 
-        self.minsize(self.winfo_screenwidth(),self.winfo_screenheight())
+        #self.minsize(self.winfo_screenwidth(),self.winfo_screenheight())
         self.imageStack = None 
         # tool bar
         menubar = Menu(self)  
@@ -72,9 +73,9 @@ class ScanOBJGenerator(Tk):
         menubar.add_cascade(label="Edit", menu=editMenu)  
 
         # three views front, side, top 
-        self.panalFront = None 
-        self.panalSide = None 
-        self.panalTop = None 
+        #self.panalFront = None 
+        #self.panalSide = None 
+        #self.panalTop = None 
         self.frontBar = None
         self.sideBar = None
         self.topBar = None 
@@ -88,11 +89,11 @@ class ScanOBJGenerator(Tk):
         self.thresholdBarMin.grid(row=4,column=0,sticky = W) 
         self.thresholdBarMin.set(self.thresholdMin)
         
-        self.viewThresholdCheck = Checkbutton(self,text="View Threshold Image", variable = self.viewThresholdVar, command=self.refreshImages) 
-        self.viewThresholdCheck.grid(row=5, column = 0, sticky = NE)  
+#        self.viewThresholdCheck = Checkbutton(self,text="View Threshold Image", variable = self.viewThresholdVar, command=self.refreshImages) 
+#        self.viewThresholdCheck.grid(row=5, column = 0, sticky = NE)  
           
-        self.applyThresholdBtn = Button(self,text="Apply Threshold",command=self.applyThreshold)
-        self.applyThresholdBtn.grid(row=3,column=0,sticky = E) 
+#        self.applyThresholdBtn = Button(self,text="Apply Threshold",command=self.applyThreshold)
+#        self.applyThresholdBtn.grid(row=3,column=0,sticky = E) 
 
         # traying
         self.listboxValues = Listbox(self) 
@@ -134,25 +135,25 @@ class ScanOBJGenerator(Tk):
         self.applyTrayBtn.grid(row=4,column=2,sticky = N)
         
         # blobing 
-        self.removeDensity = Button(self,text="Remove Blob Interior", command=self.removeblobDensity) 
-        self.removeDensity.grid(row=5, column = 0, sticky = NW)
+#        self.removeDensity = Button(self,text="Remove Blob Interior", command=self.removeblobDensity) 
+#        self.removeDensity.grid(row=5, column = 0, sticky = NW)
         
         self.blobMinSize = Scale(self, from_=0, to=100, orient=HORIZONTAL, label="Min Blob Size", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.minBlobSize)
         self.blobMinSize.grid(row=6, column = 0, sticky = W) 
         self.blobMinSize.set(self.blobMinSizeVal)
         
-        self.blobImage = Button(self,text="Seperate the Blobs", command=self.blobDetection)
-        self.blobImage.grid(row=6, column = 0, sticky= E)
+#        self.blobImage = Button(self,text="Seperate the Blobs", command=self.blobDetection)
+#        self.blobImage.grid(row=6, column = 0, sticky= E)
         
         self.cellBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(self.cellBase)
         
-        self.viewCellCheck = Checkbutton(self,text="View Cel Image", variable = self.viewCellVar, command=self.refreshImages) 
-        self.viewCellCheck.grid(row=2,column=0,sticky = SE)#  row=2,column=0,sticky = SE
+#        self.viewCellCheck = Checkbutton(self,text="View Cel Image", variable = self.viewCellVar, command=self.refreshImages) 
+#        self.viewCellCheck.grid(row=2,column=0,sticky = SE)#  row=2,column=0,sticky = SE
         
-        self.applyCellBtn = Button(self,text="Apply Cel-Shade",command=self.cellShade)
-        self.applyCellBtn.grid(row=2,column=0,sticky = E) 
+#        self.applyCellBtn = Button(self,text="Apply Cel-Shade",command=self.cellShade)
+#        self.applyCellBtn.grid(row=2,column=0,sticky = E) 
     
     def flipTrayHor(self): 
         for i in range(len(self.trayCSV)):  
@@ -181,7 +182,8 @@ class ScanOBJGenerator(Tk):
                 print("blankspace")
             else: 
                 tray = pd.read_csv(self.resTrayPopUp[i],header=None)
-                tray = np.array(tray.values)  
+                tray = np.array(tray.values) 
+                #tray = genfromtxt(self.resTrayPopUp[i], delimiter=',')
                 self.trayCSV.append(tray)
         self.refreshImages()
             
@@ -228,6 +230,7 @@ class ScanOBJGenerator(Tk):
             #loopRate = 1
         for i in range(0,self.imageStack.shape[0]): 
             temp = self.imageStack[i,:,:].astype('uint8') 
+            temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
             if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10:
                 if onTray == False: 
                     onTray = True
@@ -340,13 +343,13 @@ class ScanOBJGenerator(Tk):
     def blobDetection(self): 
         if self.imageStack is None:
             return  
-        self.imageStack[self.imageStack <= self.thresholdMin] = 0    
-        self.imageStack[self.imageStack >= self.thresholdMax] = 0
+        #self.imageStack[self.imageStack <= self.thresholdMin] = 0    
+        #self.imageStack[self.imageStack >= self.thresholdMax] = 0
         self.imageStack[self.imageStack != 0] = 255 
         self.imageStack = measure.label(self.imageStack) 
         self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)  
-        self.viewThresholdVar.set(0)
-        self.viewThresholdCheck.config(state="disabled")
+        #self.viewThresholdVar.set(0)
+        #self.viewThresholdCheck.config(state="disabled")
         self.blobbed = True
         self.refreshImages()
     
@@ -448,6 +451,8 @@ class ScanOBJGenerator(Tk):
          #nt("do the segmentation tiffs")
          if os.path.isdir(self.workingPath + '/'+"blobstacks") == False:
              os.mkdir(self.workingPath + '/'+"blobstacks")
+         self.imageStack = self.ViewImagePreviews(self.imageStack,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+         self.blobDetection()
          unique = np.unique(self.imageStack)
          bounds = [] 
          blobCenters = [] 
@@ -552,26 +557,31 @@ class ScanOBJGenerator(Tk):
 
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = cv.resize(temp,self.imgFrontSize) 
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        temp = Image.fromarray(temp) 
-        self.imgFront = ImageTk.PhotoImage(image=temp) 
-        self.panalFront.configure(image=self.imgFront) 
-        self.panalFront.image = self.imgFront
+        #temp = Image.fromarray(temp) 
+        #self.imgFront = ImageTk.PhotoImage(image=temp) 
+        #self.panalFront.configure(image=self.imgFront) 
+        #self.panalFront.image = self.imgFront 
+        cv.imshow("front", temp)
+        #cv.waitkey(1)
 
     
     def sideSlider(self,val): 
         temp = self.imageStack[:,int(val)-1,:].astype('uint8')
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = cv.resize(temp,self.imgSideSize)
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        temp = Image.fromarray(temp)  
-        self.imgSide = ImageTk.PhotoImage(image=temp) 
-        self.panalSide.configure(image=self.imgSide) 
-        self.panalSide.image = self.imgSide
+        #temp = Image.fromarray(temp)  
+        #self.imgSide = ImageTk.PhotoImage(image=temp) 
+        #self.panalSide.configure(image=self.imgSide) 
+        #self.panalSide.image = self.imgSide 
+        cv.imshow("side", temp)
+        #cv.waitkey(1)
+        
     
     def rotate(self, origin, point, angle):
         """
@@ -631,15 +641,17 @@ class ScanOBJGenerator(Tk):
         # left image
         temp = self.imageStack[int(val)-1,:,:].astype('uint8') 
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
-        temp = self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,val)                
         temp = cv.resize(temp,self.imgTopSize)  
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        temp = Image.fromarray(temp)  
-        self.imgTop = ImageTk.PhotoImage(image=temp)  
-        self.panalTop.configure(image=self.imgTop) 
-        self.panalTop.image = self.imgTop
+        #temp = Image.fromarray(temp)  
+        cv.imshow("top", temp)
+        #cv.waitkey(1)
+        #self.imgTop = ImageTk.PhotoImage(image=temp)  
+        #self.panalTop.configure(image=self.imgTop) 
+        #self.panalTop.image = self.imgTop
 
     def image_resize(self,image, width = None, height = None, inter = cv.INTER_AREA): 
         # by thewaywewere https://stackoverflow.com/questions/44650888/resize-an-image-without-distortion-opencv accessed 11/11/19
@@ -832,57 +844,61 @@ class ScanOBJGenerator(Tk):
         
         self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
         
-        if self.imgTop.shape[0] > self.imgTop.shape[1] :
-            if self.imgTop.shape[0]  > self.maxSize: 
-                size = self.imgTop.shape[1]/(self.imgTop.shape[0]/self.maxSize)   
-                self.imgTopSize = (int(size),self.maxSize)
-        else: 
-            if self.imgTop.shape[1]  > self.maxSize: 
-                size = self.imgTop.shape[0]/(self.imgTop.shape[1]/self.maxSize)
-                self.imgTopSize = (self.maxSize,int(size)) 
-        self.imgTop = cv.resize(self.imgTop,self.imgTopSize)
+        # if self.imgTop.shape[0] > self.imgTop.shape[1] :
+        #     if self.imgTop.shape[0]  > self.maxSize: 
+        #         size = self.imgTop.shape[1]/(self.imgTop.shape[0]/self.maxSize)   
+        #         self.imgTopSize = (int(size),self.maxSize)
+        # else: 
+        #     if self.imgTop.shape[1]  > self.maxSize: 
+        #         size = self.imgTop.shape[0]/(self.imgTop.shape[1]/self.maxSize)
+        #         self.imgTopSize = (self.maxSize,int(size)) 
+        # self.imgTop = cv.resize(self.imgTop,self.imgTopSize)
         
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)  
-        self.imgTop = Image.fromarray(self.imgTop) 
-        self.imgTop = ImageTk.PhotoImage(image=self.imgTop)  
-        self.panalTop = Label(self,image=self.imgTop)
-        self.panalTop.grid(row=0,column=0)
+        #self.imgTop = Image.fromarray(self.imgTop) 
+        #self.imgTop = ImageTk.PhotoImage(image=self.imgTop)  
+        #self.panalTop = Label(self,image=self.imgTop)
+        #self.panalTop.grid(row=0,column=0)
+        cv.imshow("top",self.imgTop)
         
         self.imgSide = self.imageStack[:,0,:].astype('uint8')  
         #if self.downsampleFactor > 1: 
             #self.imgSide = np.delete(self.imgSide,list(range(0,self.imgSide.shape[0],self.downsampleFactor)),axis=0)   
         self.imgSideSize = self.imgSide.shape
 
-        if self.imgSideSize[0] > self.imgSideSize[1]: 
-            self.imgSide = self.image_resize(self.imgSide,height=self.maxSize)
-        else: 
-            self.imgSide = self.image_resize(self.imgSide,width=self.maxSize) 
-        self.imgSideSize = self.imgSide.shape
+        # if self.imgSideSize[0] > self.imgSideSize[1]: 
+        #     self.imgSide = self.image_resize(self.imgSide,height=self.maxSize)
+        # else: 
+        #     self.imgSide = self.image_resize(self.imgSide,width=self.maxSize) 
+        # self.imgSideSize = self.imgSide.shape
         
         self.imgSide = cv.cvtColor(self.imgSide,cv.COLOR_GRAY2RGB) 
-        self.imgSide = Image.fromarray(self.imgSide) 
-        self.imgSide = ImageTk.PhotoImage(image=self.imgSide)  
-        self.panalSide = Label(self,image=self.imgSide)
-        self.panalSide.grid(row=0,column=1)     
+        #self.imgSide = Image.fromarray(self.imgSide) 
+        #self.imgSide = ImageTk.PhotoImage(image=self.imgSide)  
+        #self.panalSide = Label(self,image=self.imgSide)
+        #self.panalSide.grid(row=0,column=1)     
+        cv.imshow("side", self.imgSide)
         
         self.imgFront = self.imageStack[:,:,0].astype('uint8') 
         #if self.downsampleFactor > 1: 
            # self.imgFront = np.delete(self.imgFront,list(range(0,self.imgFront.shape[0],self.downsampleFactor)),axis=0) 
 
         self.imgFrontSize = self.imgFront.shape  
-        if self.imgFrontSize[0] > self.imgFrontSize[1]: 
-            self.imgFront = self.image_resize(self.imgFront,height=self.maxSize)
-        else: 
-            self.imgFront = self.image_resize(self.imgFront,width=self.maxSize) 
-        self.imgFrontSize = self.imgFront.shape
+        # if self.imgFrontSize[0] > self.imgFrontSize[1]: 
+        #     self.imgFront = self.image_resize(self.imgFront,height=self.maxSize)
+        # else: 
+        #     self.imgFront = self.image_resize(self.imgFront,width=self.maxSize) 
+        # self.imgFrontSize = self.imgFront.shape
         
         
         self.imgFront = cv.cvtColor(self.imgFront,cv.COLOR_GRAY2RGB) 
-        self.imgFront = Image.fromarray(self.imgFront) 
-        self.imgFront = ImageTk.PhotoImage(image=self.imgFront)  
-        self.panalFront = Label(self,image=self.imgFront)
-        self.panalFront.grid(row=0,column=2)
-            
+        #self.imgFront = Image.fromarray(self.imgFront) 
+        #self.imgFront = ImageTk.PhotoImage(image=self.imgFront)  
+        #self.panalFront = Label(self,image=self.imgFront)
+        #self.panalFront.grid(row=0,column=2)
+        cv.imshow("front", temp)
+        #cv.waitkey(1)
+        
         # bars for showing scale
         self.frontBar = Scale(self, from_=1, to=self.imageStack.shape[2], orient=HORIZONTAL, length=self.winfo_screenwidth()/3, sliderlength=self.winfo_screenheight()//100, command=self.frontSlider)
         self.frontBar.grid(row=1,column=2)
