@@ -1,6 +1,6 @@
 from tkinter import filedialog
 from tkinter import * 
-from PIL import Image, ImageTk  
+#from PIL import Image, ImageTk  
 from tkinter.messagebox import showinfo 
 from skimage import measure, morphology  
 #from numpy import genfromtxt
@@ -11,8 +11,8 @@ import os
 import open3d as o3d 
 #import pandas as pd
 import shutil
-import time
-import pkg_resources.py2_warn 
+#import time
+#import pkg_resources.py2_warn 
 
 # our files
 from PopUpClasses import *
@@ -438,7 +438,7 @@ class ScanOBJGenerator(Tk):
             infoFile.close()
     
     def exportTiffStacks(self):
-         start = time.perf_counter() 
+         #start = time.perf_counter() 
         
          if self.imageStack is None: 
              return
@@ -537,8 +537,8 @@ class ScanOBJGenerator(Tk):
                           # folder containing the tiff stacks
                           stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
                           self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o])
-         end = time.perf_counter()
-         print(end - start)
+         #end = time.perf_counter()
+         #print(end - start)
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell):
         #if downSample: 
