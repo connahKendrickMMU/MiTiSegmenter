@@ -3,13 +3,13 @@ from tkinter import *
 from PIL import Image, ImageTk  
 from tkinter.messagebox import showinfo 
 from skimage import measure, morphology  
-from numpy import genfromtxt
+#from numpy import genfromtxt
 import math
 import numpy as np  
 import cv2 as cv
 import os
 import open3d as o3d 
-import pandas as pd
+#import pandas as pd
 import shutil
 import time
 import pkg_resources.py2_warn 
@@ -181,9 +181,10 @@ class ScanOBJGenerator(Tk):
             elif self.resTrayPopUp[i] == '':
                 print("blankspace")
             else: 
-                tray = pd.read_csv(self.resTrayPopUp[i],header=None)
-                tray = np.array(tray.values) 
-                #tray = genfromtxt(self.resTrayPopUp[i], delimiter=',')
+                #tray = pd.read_csv(self.resTrayPopUp[i],header=None)
+                #tray = np.array(tray.values) 
+                tray = np.loadtxt(self.resTrayPopUp[i], delimiter=',',dtype='U')
+                print(tray)
                 self.trayCSV.append(tray)
         self.refreshImages()
             
