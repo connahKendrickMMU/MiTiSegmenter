@@ -1,7 +1,10 @@
+import traceback 
+import tkinter.messagebox
+import tkinter as tk
 from tkinter import filedialog
 from tkinter import * 
 #from PIL import Image, ImageTk  
-from tkinter.messagebox import showinfo 
+from tkinter.messagebox import showinfo
 from skimage import measure, morphology  
 #from numpy import genfromtxt
 import math
@@ -21,10 +24,12 @@ from PopUpClasses import *
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
 ####### Build exe ####### 
 # need add path to dask.yaml and distribution.yaml in you python Lib/site-packages/(dask or distribution)
-class ScanOBJGenerator(Tk): 
+class ScanOBJGenerator(): 
     # initialisation 
-    def __init__(self): 
-        super().__init__()  
+    def __init__(self,master): 
+        #super().__init__()   
+        master.report_callback_exception = self.showError
+        self.master = master
         self.thresholdMax = 255  
         self.thresholdMin = 0
         self.blobMinSizeVal = 50
@@ -34,7 +39,8 @@ class ScanOBJGenerator(Tk):
         self.imgTopSize = (0,0) 
         self.imgSideSize = (0,0) 
         self.imgFrontSize = (0,0) 
-        self.maxSize = self.winfo_screenwidth()//3 
+        self.winWidth = master.winfo_screenwidth()
+        self.winHeight = master.winfo_screenheight()
         self.gridSize = (0,0)
         self.gridCenter = (0,0)
         self.gridRotation = 0
@@ -43,7 +49,7 @@ class ScanOBJGenerator(Tk):
         self.layers = []
         self.traySize = 50
         self.trayCSV = [] 
-        self.init_GUI() 
+        self.init_GUI(master) 
         self.workingPath = "" 
         self.blobCenterOfMass = []
         self.TL = 0 
@@ -51,14 +57,14 @@ class ScanOBJGenerator(Tk):
         self.BL = 0
         self.BR = 0
         self.blobbed = False
-    def init_GUI(self):
+    def init_GUI(self,master):
         #main window title and size
-        self.title("MiTiSegmenter") 
-        #self.minsize(self.winfo_screenwidth(),self.winfo_screenheight())
+        master.title("MiTiSegmenter") 
+        #self.minsize(self.winWidth,self.winHeight)
         self.imageStack = None 
         # tool bar
-        menubar = Menu(self)  
-        self.config(menu=menubar) 
+        menubar = Menu(master)  
+        master.config(menu=menubar) 
         fileMenu = Menu(menubar)  
         fileMenu.add_command(label="Load Images", command=self.loadImages) 
         fileMenu.add_command(label="Generate Point Cloud", command=self.makeAllPointCloud) 
@@ -81,11 +87,11 @@ class ScanOBJGenerator(Tk):
         self.topBar = None 
         
         # thresholding          
-        self.thresholdBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Max", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustThresholdMax) 
+        self.thresholdBar = Scale(master, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Max", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustThresholdMax) 
         self.thresholdBar.grid(row=3,column=0,sticky = W) 
         self.thresholdBar.set(self.thresholdMax) 
         
-        self.thresholdBarMin = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Min", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustThresholdMin) 
+        self.thresholdBarMin = Scale(master, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Min", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustThresholdMin) 
         self.thresholdBarMin.grid(row=4,column=0,sticky = W) 
         self.thresholdBarMin.set(self.thresholdMin)
         
@@ -96,64 +102,69 @@ class ScanOBJGenerator(Tk):
 #        self.applyThresholdBtn.grid(row=3,column=0,sticky = E) 
 
         # traying
-        self.listboxValues = Listbox(self) 
+        self.listboxValues = Listbox(master) 
         self.listboxValues.grid(row=2, column = 2, rowspan=2, sticky = W)
         
-        self.applyTrayBtn = Button(self, text="Apply Traying",command=self.applyTray)
+        self.applyTrayBtn = Button(master, text="Apply Traying",command=self.applyTray)
         self.applyTrayBtn.grid(row=2,column=1,sticky = N)
         
-        self.removeTrayBtn = Button(self, text="Delete Tray",command=self.deleteTray)
+        self.removeTrayBtn = Button(master, text="Delete Tray",command=self.deleteTray)
         self.removeTrayBtn.grid(row=2, column=1,sticky=W)
         
-        self.addTrayBtn = Button(self, text="Add Tray",command=self.addTray)
+        self.addTrayBtn = Button(master, text="Add Tray",command=self.addTray)
         self.addTrayBtn.grid(row=2, column=1,sticky=E)
         
-        self.RotateGridBar = Scale(self, from_=0, to=360, orient=HORIZONTAL, label="Rotate Tray", length=self.winfo_screenwidth()/3, sliderlength=self.winfo_screenheight()//100, command=self.adjustGridRotation) 
+        self.RotateGridBar = Scale(master, from_=0, to=360, orient=HORIZONTAL, label="Rotate Tray", length=self.winWidth/3, sliderlength=self.winHeight//100, command=self.adjustGridRotation) 
         self.RotateGridBar.grid(row=3,column=1,sticky = NW) 
         self.RotateGridBar.set(self.gridRotation)
         
-        self.ScaleGridBarH = Scale(self, from_=0, to=360, orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.adjustGridSizeHor) 
+        self.ScaleGridBarH = Scale(master, from_=0, to=360, orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeHor) 
         self.ScaleGridBarH.grid(row=4,column=1,sticky = NW) 
         self.ScaleGridBarH.set(self.gridSize[0])
         
-        self.ScaleGridBarV = Scale(self, from_=0, to=360, orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.adjustGridSizeVert) 
+        self.ScaleGridBarV = Scale(master, from_=0, to=360, orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeVert) 
         self.ScaleGridBarV.grid(row=4,column=1,sticky = NE) 
         self.ScaleGridBarV.set(self.gridSize[1])
         
-        self.GridMidX = Scale(self, from_=0,to=360, orient=HORIZONTAL, label="Grid Center X", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.AdjustGridCentreX)
+        self.GridMidX = Scale(master, from_=0,to=360, orient=HORIZONTAL, label="Grid Center X", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.AdjustGridCentreX)
         self.GridMidX.grid(row=5,column=1,sticky = NW)
         self.GridMidX.set(self.gridSize[0])
         
-        self.GridMidY = Scale(self, from_=0,to=360, orient=HORIZONTAL, label="Grid Center Y", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.AdjustGridCentreY)
+        self.GridMidY = Scale(master, from_=0,to=360, orient=HORIZONTAL, label="Grid Center Y", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.AdjustGridCentreY)
         self.GridMidY.grid(row=5,column=1,sticky = NE)
         self.GridMidY.set(self.gridSize[1])
         
-        self.listbox = Listbox(self) 
+        self.listbox = Listbox(master) 
         self.listbox.grid(row=2, column = 2, rowspan=2, sticky = E)  
         
-        self.applyTrayBtn = Button(self, text="Load CSVs",command=self.loadCSV)
+        self.applyTrayBtn = Button(master, text="Load CSVs",command=self.loadCSV)
         self.applyTrayBtn.grid(row=4,column=2,sticky = N)
         
         # blobing 
 #        self.removeDensity = Button(self,text="Remove Blob Interior", command=self.removeblobDensity) 
 #        self.removeDensity.grid(row=5, column = 0, sticky = NW)
         
-        self.blobMinSize = Scale(self, from_=0, to=100, orient=HORIZONTAL, label="Min Blob Size", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.minBlobSize)
+        self.blobMinSize = Scale(master, from_=0, to=100, orient=HORIZONTAL, label="Min Blob Size", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.minBlobSize)
         self.blobMinSize.grid(row=6, column = 0, sticky = W) 
         self.blobMinSize.set(self.blobMinSizeVal)
         
 #        self.blobImage = Button(self,text="Seperate the Blobs", command=self.blobDetection)
 #        self.blobImage.grid(row=6, column = 0, sticky= E)
         
-        self.cellBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=self.adjustCellBase) 
+        self.cellBar = Scale(master, from_=0, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(self.cellBase)
-        
+        master.report_callback_exception = self.showError
 #        self.viewCellCheck = Checkbutton(self,text="View Cel Image", variable = self.viewCellVar, command=self.refreshImages) 
 #        self.viewCellCheck.grid(row=2,column=0,sticky = SE)#  row=2,column=0,sticky = SE
         
 #        self.applyCellBtn = Button(self,text="Apply Cel-Shade",command=self.cellShade)
 #        self.applyCellBtn.grid(row=2,column=0,sticky = E) 
+        
+    def showError(self, *args):
+        err = traceback.format_exception(*args) 
+        messagebox.showerror('Exception: ', err)
+        # trigger with = raise Exception('I know Python!')
     
     def flipTrayHor(self): 
         for i in range(len(self.trayCSV)):  
@@ -170,8 +181,8 @@ class ScanOBJGenerator(Tk):
         if len(self.layers) == 0:
             print("no layers created")
 
-        self.resTrayPopUp = GetTrayCSVs(self,self.layers) 
-        self.wait_window(self.resTrayPopUp.top)  
+        self.resTrayPopUp = GetTrayCSVs(self.master,self.layers) 
+        self.master.wait_window(self.resTrayPopUp.top)  
         self.resTrayPopUp = self.resTrayPopUp.value
         self.resTrayPopUp = self.resTrayPopUp.split("*")
         for i in range(len(self.resTrayPopUp)):
@@ -388,7 +399,8 @@ class ScanOBJGenerator(Tk):
             os.remove(os.path.expanduser('~')+'/meshFull.obj')
             #print("file written")
         except: 
-            print("file not working properly")
+            print("file not working properly") 
+            raise Exception('Error : generater3D model could not write file ' + path + " this is not a fatel error the program will stll output all other files, unless stated")
         
     def makeAllPointCloud(self):  
          if self.imageStack is None: 
@@ -442,8 +454,8 @@ class ScanOBJGenerator(Tk):
         
          if self.imageStack is None: 
              return
-         self.resPopUp = GenerateTiffStackWindow(self) 
-         self.wait_window(self.resPopUp.top)  
+         self.resPopUp = GenerateTiffStackWindow(self.master) 
+         self.master.wait_window(self.resPopUp.top)  
          self.resPopUp.value = self.resPopUp.value.split(';')
          generateRaw = int(self.resPopUp.value[0])
          generatePro = int(self.resPopUp.value[1])
@@ -559,7 +571,7 @@ class ScanOBJGenerator(Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        temp = cv.resize(temp,self.imgFrontSize) 
+        #temp = cv.resize(temp,self.imgFrontSize) 
         if self.blobbed == True:
             temp[temp >= 1] = 255
         #temp = Image.fromarray(temp) 
@@ -573,7 +585,7 @@ class ScanOBJGenerator(Tk):
     def sideSlider(self,val): 
         temp = self.imageStack[:,int(val)-1,:].astype('uint8')
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        temp = cv.resize(temp,self.imgSideSize)
+        #temp = cv.resize(temp,self.imgSideSize)
         if self.blobbed == True:
             temp[temp >= 1] = 255
         #temp = Image.fromarray(temp)  
@@ -610,32 +622,33 @@ class ScanOBJGenerator(Tk):
                 self.TR = self.rotate(halfTemp,self.TR,self.gridRotation) 
                 self.BL = self.rotate(halfTemp,self.BL,self.gridRotation)
                 self.BR = self.rotate(halfTemp,self.BR,self.gridRotation) 
-                #print(self.trayCSV[i])
-                temp = cv.putText(temp,self.trayCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                temp = cv.putText(temp,self.trayCSV[i][0][self.trayCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
-                temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][self.trayCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-
-                rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
-                rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
-                for o in range(self.trayCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
-                    pnt1 = (rowsY[o][0],rowsY[o][1])
-                    pnt2 = (rowsY[o][2],rowsY[o][3])
-                    temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=1)
-                for o in range(self.trayCSV[i].shape[1]+1):
-                    pnt1 = (rowsX[o][0],rowsX[o][1])
-                    pnt2 = (rowsX[o][2],rowsX[o][3])
-                    temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
-
-                    # get the accrow values for the top row and bottom
-                    topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                    bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                for o in range(topInterp.shape[0]):# down
-                    #interpolate between the top and bottom downward looping to fill the gaps 
-                    cols = np.linspace(topInterp[o],bottomInterp[o],num=self.trayCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
-                    for q in range(cols.shape[0]):
-                        # draw circle at cols 
-                        temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
+                if i < len(self.trayCSV):
+                #print(self.trayCSV)
+                    temp = cv.putText(temp,self.trayCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    temp = cv.putText(temp,self.trayCSV[i][0][self.trayCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+                    temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][self.trayCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+    
+                    rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
+                    rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
+                    for o in range(self.trayCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
+                        pnt1 = (rowsY[o][0],rowsY[o][1])
+                        pnt2 = (rowsY[o][2],rowsY[o][3])
+                        temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=1)
+                    for o in range(self.trayCSV[i].shape[1]+1):
+                        pnt1 = (rowsX[o][0],rowsX[o][1])
+                        pnt2 = (rowsX[o][2],rowsX[o][3])
+                        temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
+    
+                        # get the accrow values for the top row and bottom
+                        topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                        bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                    for o in range(topInterp.shape[0]):# down
+                        #interpolate between the top and bottom downward looping to fill the gaps 
+                        cols = np.linspace(topInterp[o],bottomInterp[o],num=self.trayCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
+                        for q in range(cols.shape[0]):
+                            # draw circle at cols 
+                            temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
         return temp
     
     def topSlider(self,val): 
@@ -644,7 +657,7 @@ class ScanOBJGenerator(Tk):
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,val)                
-        temp = cv.resize(temp,self.imgTopSize)  
+        #temp = cv.resize(temp,self.imgTopSize)  
         if self.blobbed == True:
             temp[temp >= 1] = 255
         #temp = Image.fromarray(temp)  
@@ -682,8 +695,8 @@ class ScanOBJGenerator(Tk):
         return resized
     
     def generateInfoFile(self):  
-        self.resPopUp = InfoWindow(self) 
-        self.wait_window(self.resPopUp.top)  
+        self.resPopUp = InfoWindow(self.master) 
+        self.master.wait_window(self.resPopUp.top)  
         #print(self.resPopUp.value)
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 3: 
@@ -781,8 +794,8 @@ class ScanOBJGenerator(Tk):
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner!")
             return
         
-        self.resPopUp = DownsampleWindow(self) 
-        self.wait_window(self.resPopUp.top)  
+        self.resPopUp = DownsampleWindow(self.master) 
+        self.master.wait_window(self.resPopUp.top)  
         #print(self.resPopUp.value)
         resolution = self.resPopUp.value 
         if len(resolution) < 1: 
@@ -821,25 +834,32 @@ class ScanOBJGenerator(Tk):
         self.imageStack = np.zeros((len(self.imagePaths),temp.shape[0]//self.downsampleFactor,temp.shape[1]//self.downsampleFactor)).astype("uint8")
         for i in range(len(self.imagePaths)):        
             print("\rprocessing image : " + str(i) + " of " + str(len(self.imagePaths)),end=" ")
+            if os.path.isfile(path + '/' + self.imagePaths[i]) == False: 
+                showinfo("Image not found", path + '/' + self.imagePaths[i] + " : does not exist check the file if at this location")
+                return
             self.imageStack[i] = cv.resize(cv.imread(path + '/' + self.imagePaths[i],0).astype("uint8"),(temp.shape[1]//self.downsampleFactor,temp.shape[0]//self.downsampleFactor))
+            tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
+            tempim = cv.putText(tempim,(str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+            cv.imshow("top",tempim) 
+            cv.waitKey(1)
         # get the bottom image (default in the scan)
         self.imgTop = self.imageStack[0,:,:].astype('uint8')   
         self.imgTopSize = self.imgTop.shape
         self.gridSize = ( ((self.imgTop.shape[0]//10)*9)//2, ((self.imgTop.shape[1]//10)*3)//2)
         
-        self.ScaleGridBarH = Scale(self, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.adjustGridSizeHor) 
+        self.ScaleGridBarH = Scale(self.master, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeHor) 
         self.ScaleGridBarH.grid(row=4,column=1,sticky = NW) 
         self.ScaleGridBarH.set(self.gridSize[0])
         
-        self.ScaleGridBarV = Scale(self, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.adjustGridSizeVert) 
+        self.ScaleGridBarV = Scale(self.master, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeVert) 
         self.ScaleGridBarV.grid(row=4,column=1,sticky = NE) 
         self.ScaleGridBarV.set(self.gridSize[1])
         
-        self.GridMidX = Scale(self, from_=0,to=(self.imgTop.shape[0]), orient=HORIZONTAL, label="Grid center X", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.AdjustGridCentreX)
+        self.GridMidX = Scale(self.master, from_=0,to=(self.imgTop.shape[0]), orient=HORIZONTAL, label="Grid center X", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.AdjustGridCentreX)
         self.GridMidX.grid(row=5,column=1,sticky = NW)
         self.GridMidX.set(self.imgTop.shape[0]//2)
         
-        self.GridMidY = Scale(self, from_=0,to=(self.imgTop.shape[1]), orient=HORIZONTAL, label="Grid center Y", length=self.winfo_screenwidth()/6, sliderlength=self.winfo_screenheight()//100, command=self.AdjustGridCentreY)
+        self.GridMidY = Scale(self.master, from_=0,to=(self.imgTop.shape[1]), orient=HORIZONTAL, label="Grid center Y", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.AdjustGridCentreY)
         self.GridMidY.grid(row=5,column=1,sticky = NE)
         self.GridMidY.set(self.imgTop.shape[1]//2)
         
@@ -901,14 +921,15 @@ class ScanOBJGenerator(Tk):
         #cv.waitkey(1)
         
         # bars for showing scale
-        self.frontBar = Scale(self, from_=1, to=self.imageStack.shape[2], orient=HORIZONTAL, length=self.winfo_screenwidth()/3, sliderlength=self.winfo_screenheight()//100, command=self.frontSlider)
+        self.frontBar = Scale(self.master, from_=1, to=self.imageStack.shape[2], orient=HORIZONTAL, length=self.winWidth/3, sliderlength=self.winHeight//100, command=self.frontSlider)
         self.frontBar.grid(row=1,column=2)
         self.frontBar.set(self.imageStack.shape[2]//2)
-        self.sideBar = Scale(self, from_=1, to=self.imageStack.shape[1], orient=HORIZONTAL, length=self.winfo_screenwidth()/3, sliderlength=self.winfo_screenheight()//100, command=self.sideSlider)
+        self.sideBar = Scale(self.master, from_=1, to=self.imageStack.shape[1], orient=HORIZONTAL, length=self.winWidth/3, sliderlength=self.winHeight//100, command=self.sideSlider)
         self.sideBar.grid(row=1,column=1) 
         self.sideBar.set(self.imageStack.shape[1]//2)
-        self.topBar = Scale(self, from_=1, to=self.imageStack.shape[0], orient=HORIZONTAL, length=self.winfo_screenwidth()/3, sliderlength=self.winfo_screenheight()//100, command=self.topSlider)
+        self.topBar = Scale(self.master, from_=1, to=self.imageStack.shape[0], orient=HORIZONTAL, length=self.winWidth/3, sliderlength=self.winHeight//100, command=self.topSlider)
         self.topBar.grid(row=1,column=0) 
         self.topBar.set(self.imageStack.shape[0]//2)
-root = ScanOBJGenerator() 
+root = tk.Tk()
+app = ScanOBJGenerator(root) 
 root.mainloop()
