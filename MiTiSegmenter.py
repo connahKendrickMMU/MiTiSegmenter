@@ -151,7 +151,7 @@ class ScanOBJGenerator():
 #        self.blobImage = Button(self,text="Seperate the Blobs", command=self.blobDetection)
 #        self.blobImage.grid(row=6, column = 0, sticky= E)
         
-        self.cellBar = Scale(master, from_=0, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustCellBase) 
+        self.cellBar = Scale(master, from_=1, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(self.cellBase)
         master.report_callback_exception = self.showError
@@ -400,7 +400,7 @@ class ScanOBJGenerator():
             #print("file written")
         except: 
             print("file not working properly") 
-            raise Exception('Error : generater3D model could not write file ' + path + " this is not a fatel error the program will stll output all other files, unless stated")
+            #raise Exception('Error : generater3D model could not write file ' + path + " this is not a fatel error the program will stll output all other files, unless stated")
         
     def makeAllPointCloud(self):  
          if self.imageStack is None: 
@@ -471,6 +471,7 @@ class ScanOBJGenerator():
          blobCenters = [] 
          gridCenters = [] 
          gridNames = []
+         TrayToBlob = []
          for i in range(unique.shape[0]):  
              print("\r Getting blobs  : "+str(i),end=" ")
              if unique[i] == 0: # background 
@@ -482,7 +483,7 @@ class ScanOBJGenerator():
              X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor  
              #bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X))) 
              # padd the bound by the down sample rate
-             bounds.append((np.amin(Z)-self.downsampleFactor,np.amax(Z)+self.downsampleFactor,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
+             bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
              blobCenters.append( ( (np.amin(Z)+np.amax(Z))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
          if len(self.layers) > 0:
              self.flipTrayVer()
@@ -499,30 +500,33 @@ class ScanOBJGenerator():
                             gridCenters.append([self.layers[i],Y,X])
                             gridNames.append(self.trayCSV[i][o][q])
                     # create a colleration between blobs and spread sheet
-                    TrayToBlob = []
-                    for i in range(len(blobCenters)):
-                         dist = 999999999
-                         refPoint = 0
-                         #  loop round and get the lowest distance
-                         for o in range(len(gridCenters)): 
-                             distance = math.sqrt(
-                                              (blobCenters[i][0]-gridCenters[o][0])*(blobCenters[i][0]-gridCenters[o][0]) +  
-                                              (blobCenters[i][1]-gridCenters[o][1])*(blobCenters[i][1]-gridCenters[o][1]) + 
-                                              (blobCenters[i][2]-gridCenters[o][2])*(blobCenters[i][2]-gridCenters[o][2])) 
-                             if dist > distance: 
-                                 dist = distance   
-                                 refPoint = o
-                         if refPoint in TrayToBlob:
-                             indx = 1 
-                             gotName = True
-                             while(gotName): 
-                                 if gridNames[refPoint]+str(indx) in gridNames:
-                                     indx = indx+1
-                                 else: 
-                                     gridNames.append(gridNames[refPoint]+str(indx)) 
-                                     refPoint = len(gridNames)-1
-                                     gotName = False
-                         TrayToBlob.append(refPoint) 
+                    
+             for p in range(len(blobCenters)):
+                  print(p)
+                  dist = 999999999
+                  refPoint = 0
+                  #  loop round and get the lowest distance
+                  for o in range(len(gridCenters)): 
+                      distance = math.sqrt(
+                                       (blobCenters[p][0]-gridCenters[o][0])*(blobCenters[p][0]-gridCenters[o][0]) +
+                                       (blobCenters[p][1]-gridCenters[o][1])*(blobCenters[p][1]-gridCenters[o][1]) +
+                                       (blobCenters[p][2]-gridCenters[o][2])*(blobCenters[p][2]-gridCenters[o][2]))
+                      if dist > distance:
+                          dist = distance
+                          refPoint = o
+                  if (refPoint in TrayToBlob) == False:
+                      print("here")
+                      indx = 1 
+                      gotName = True
+                      while(gotName):
+                          print(gotName)
+                          if gridNames[refPoint]+'_'+str(indx) in gridNames:
+                              indx = indx+1
+                          else: 
+                              gridNames.append(gridNames[refPoint]+'_'+str(indx)) 
+                              refPoint = len(gridNames)-1
+                              gotName = False
+                  TrayToBlob.append(refPoint) 
              # cycle through and create directories   
          self.flipTrayVer()
          for i in range(len(bounds)):  # was grid names
@@ -708,7 +712,8 @@ class ScanOBJGenerator():
         infoFile.write("pixelsize " + resolution[0] + " " + resolution[1]+"\n") 
         infoFile.write("offset 0 0\n") 
         for i in range(len(paths)):
-            infoFile.write('"' + paths[i]+'" ' + str(float(resolution[2])*i) +"\n") 
+            if (paths[i].lower().endswith("tif") or paths[i].lower().endswith("jpg") or paths[i].lower().endswith("png")):
+                infoFile.write('"' + paths[i]+'" ' + str(float(resolution[2])*i) +"\n") 
         infoFile.close()
     
     def LoadImageStack(self, path):
