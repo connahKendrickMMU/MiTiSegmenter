@@ -3,19 +3,15 @@ import tkinter.messagebox
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import * 
-#from PIL import Image, ImageTk  
 from tkinter.messagebox import showinfo
-from skimage import measure, morphology  
-#from numpy import genfromtxt
+from skimage import measure, morphology
 import math
 import numpy as np  
 import cv2 as cv
 import os
 import open3d as o3d 
-#import pandas as pd
 import shutil
-#import time
-#import pkg_resources.py2_warn 
+
 
 # our files
 from PopUpClasses import *
@@ -27,7 +23,6 @@ from PopUpClasses import *
 class ScanOBJGenerator(): 
     # initialisation 
     def __init__(self,master): 
-        #super().__init__()   
         master.report_callback_exception = self.showError
         self.master = master
         self.thresholdMax = 255  
@@ -57,10 +52,11 @@ class ScanOBJGenerator():
         self.BL = 0
         self.BR = 0
         self.blobbed = False
+        
     def init_GUI(self,master):
         #main window title and size
         master.title("MiTiSegmenter") 
-        #self.minsize(self.winWidth,self.winHeight)
+
         self.imageStack = None 
         # tool bar
         menubar = Menu(master)  
@@ -79,9 +75,6 @@ class ScanOBJGenerator():
         menubar.add_cascade(label="Edit", menu=editMenu)  
 
         # three views front, side, top 
-        #self.panalFront = None 
-        #self.panalSide = None 
-        #self.panalTop = None 
         self.frontBar = None
         self.sideBar = None
         self.topBar = None 
@@ -94,12 +87,6 @@ class ScanOBJGenerator():
         self.thresholdBarMin = Scale(master, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Min", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustThresholdMin) 
         self.thresholdBarMin.grid(row=4,column=0,sticky = W) 
         self.thresholdBarMin.set(self.thresholdMin)
-        
-#        self.viewThresholdCheck = Checkbutton(self,text="View Threshold Image", variable = self.viewThresholdVar, command=self.refreshImages) 
-#        self.viewThresholdCheck.grid(row=5, column = 0, sticky = NE)  
-          
-#        self.applyThresholdBtn = Button(self,text="Apply Threshold",command=self.applyThreshold)
-#        self.applyThresholdBtn.grid(row=3,column=0,sticky = E) 
 
         # traying
         self.listboxValues = Listbox(master) 
@@ -140,10 +127,6 @@ class ScanOBJGenerator():
         self.applyTrayBtn = Button(master, text="Load CSVs",command=self.loadCSV)
         self.applyTrayBtn.grid(row=4,column=2,sticky = N)
         
-        # blobing 
-#        self.removeDensity = Button(self,text="Remove Blob Interior", command=self.removeblobDensity) 
-#        self.removeDensity.grid(row=5, column = 0, sticky = NW)
-        
         self.blobMinSize = Scale(master, from_=0, to=100, orient=HORIZONTAL, label="Min Blob Size", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.minBlobSize)
         self.blobMinSize.grid(row=6, column = 0, sticky = W) 
         self.blobMinSize.set(self.blobMinSizeVal)
@@ -155,16 +138,10 @@ class ScanOBJGenerator():
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(self.cellBase)
         master.report_callback_exception = self.showError
-#        self.viewCellCheck = Checkbutton(self,text="View Cel Image", variable = self.viewCellVar, command=self.refreshImages) 
-#        self.viewCellCheck.grid(row=2,column=0,sticky = SE)#  row=2,column=0,sticky = SE
-        
-#        self.applyCellBtn = Button(self,text="Apply Cel-Shade",command=self.cellShade)
-#        self.applyCellBtn.grid(row=2,column=0,sticky = E) 
         
     def showError(self, *args):
         err = traceback.format_exception(*args) 
         messagebox.showerror('Exception: ', err)
-        # trigger with = raise Exception('I know Python!')
     
     def flipTrayHor(self): 
         for i in range(len(self.trayCSV)):  
@@ -177,23 +154,18 @@ class ScanOBJGenerator():
         self.refreshImages()
                 
     def loadCSV(self): 
-        #print("create checkbox that gets the path of each of the csv s, : cannot be in a file name") 
         if len(self.layers) == 0:
             print("no layers created")
-
         self.resTrayPopUp = GetTrayCSVs(self.master,self.layers) 
         self.master.wait_window(self.resTrayPopUp.top)  
         self.resTrayPopUp = self.resTrayPopUp.value
         self.resTrayPopUp = self.resTrayPopUp.split("*")
         for i in range(len(self.resTrayPopUp)):
-            #print(self.resTrayPopUp[i])
             if self.resTrayPopUp[i] == ' ': 
                 self.trayCSV.append(None)
             elif self.resTrayPopUp[i] == '':
                 print("blankspace")
             else: 
-                #tray = pd.read_csv(self.resTrayPopUp[i],header=None)
-                #tray = np.array(tray.values) 
                 tray = np.loadtxt(self.resTrayPopUp[i], delimiter=',',dtype='U')
                 print(tray)
                 self.trayCSV.append(tray)
@@ -229,17 +201,11 @@ class ScanOBJGenerator():
             infoFile.close()
         
     def applyTray(self):  
-        #trayCount = 0
         onTray = False
         self.layers = [] 
         self.listboxValues.delete(0,self.listboxValues.size())
-        #maxValue = 0
-        #layer = 0
         trayStart = 0
         trayCount = 0
-        #loopRate = self.downsampleFactor
-        #if loopRate == 0: 
-            #loopRate = 1
         for i in range(0,self.imageStack.shape[0]): 
             temp = self.imageStack[i,:,:].astype('uint8') 
             temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
@@ -255,19 +221,6 @@ class ScanOBJGenerator():
                     self.layers.append(trayStart + (trayCount//2))
                     trayStart = 0
                     trayCount = 0
-            #print(np.where(temp>0)[0].shape) 
-            # if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10: 
-            #     if onTray == False: 
-            #         onTray = True
-            #         trayCount = trayCount + 1 
-            #     if np.where(temp>0)[0].shape[0] > maxValue: 
-            #         maxValue = np.where(temp>0)[0].shape[0]
-            #         layer = i
-            # elif onTray == True: 
-            #     self.layers.append(layer) 
-            #     layer = 0 
-            #     maxValue = 0
-            #     onTray = False 
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
@@ -355,13 +308,9 @@ class ScanOBJGenerator():
     def blobDetection(self): 
         if self.imageStack is None:
             return  
-        #self.imageStack[self.imageStack <= self.thresholdMin] = 0    
-        #self.imageStack[self.imageStack >= self.thresholdMax] = 0
         self.imageStack[self.imageStack != 0] = 255 
         self.imageStack = measure.label(self.imageStack) 
-        self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)  
-        #self.viewThresholdVar.set(0)
-        #self.viewThresholdCheck.config(state="disabled")
+        self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)
         self.blobbed = True
         self.refreshImages()
     
@@ -377,7 +326,6 @@ class ScanOBJGenerator():
         try:
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
-            
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
             verts[:,0] = verts[:,0]* self.pixelSizeX # meters to microns 
             verts[:,1] = verts[:,1]* self.pixelSizeY
@@ -397,11 +345,9 @@ class ScanOBJGenerator():
             pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
             o3d.io.write_triangle_mesh(path+'/'+"sync.ply", pcd_load)  
             os.remove(os.path.expanduser('~')+'/meshFull.obj')
-            #print("file written")
         except: 
             print("file not working properly") 
-            #raise Exception('Error : generater3D model could not write file ' + path + " this is not a fatel error the program will stll output all other files, unless stated")
-        
+
     def makeAllPointCloud(self):  
          if self.imageStack is None: 
              return
@@ -421,7 +367,6 @@ class ScanOBJGenerator():
          thefile.close()   
          
          pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj') 
-         #o3d.visualization.draw_geometries([pcd_load])   
          o3d.io.write_triangle_mesh(os.path.expanduser('~')+'/sync.ply', pcd_load)  
          os.remove(os.path.expanduser('~')+'/meshFull.obj')
          
@@ -450,8 +395,6 @@ class ScanOBJGenerator():
             infoFile.close()
     
     def exportTiffStacks(self):
-         #start = time.perf_counter() 
-        
          if self.imageStack is None: 
              return
          self.resPopUp = GenerateTiffStackWindow(self.master) 
@@ -461,7 +404,6 @@ class ScanOBJGenerator():
          generatePro = int(self.resPopUp.value[1])
          generateMod = int(self.resPopUp.value[2])
          generateSeg = int(self.resPopUp.value[3]) 
-         #nt("do the segmentation tiffs")
          if os.path.isdir(self.workingPath + '/'+"blobstacks") == False:
              os.mkdir(self.workingPath + '/'+"blobstacks")
          self.imageStack = self.ViewImagePreviews(self.imageStack,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
@@ -476,12 +418,10 @@ class ScanOBJGenerator():
              print("\r Getting blobs  : "+str(i),end=" ")
              if unique[i] == 0: # background 
                  continue
-             
              currentBlob = np.where(self.imageStack == unique[i])
              Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) 
              Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))*self.downsampleFactor
-             X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor  
-             #bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X))) 
+             X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
              # padd the bound by the down sample rate
              bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
              blobCenters.append( ( (np.amin(Z)+np.amax(Z))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
@@ -537,7 +477,6 @@ class ScanOBJGenerator():
                  print("\r making Directories  : "+str(i),end=" ")
                  if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) ) == False:
                      os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName))  
-    
                  if generateRaw == 1: 
                      self.WriteStacks(i, blobName, bounds, 0)
                  if generatePro == 1: 
@@ -553,13 +492,8 @@ class ScanOBJGenerator():
                           # folder containing the tiff stacks
                           stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
                           self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o])
-         #end = time.perf_counter()
-         #print(end - start)
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell):
-        #if downSample: 
-            #img = np.delete(img,list(range(0,img.shape[0],downFactor)),axis=0) 
-            #print("no downsample anymore")
         if viewCell == 1: 
            img = img-(img%cell)
         if viewThres == 1: 
@@ -574,31 +508,17 @@ class ScanOBJGenerator():
 
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
-        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        #temp = cv.resize(temp,self.imgFrontSize) 
+        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        #temp = Image.fromarray(temp) 
-        #self.imgFront = ImageTk.PhotoImage(image=temp) 
-        #self.panalFront.configure(image=self.imgFront) 
-        #self.panalFront.image = self.imgFront 
         cv.imshow("front", temp)
-        #cv.waitkey(1)
-
     
     def sideSlider(self,val): 
         temp = self.imageStack[:,int(val)-1,:].astype('uint8')
-        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        #temp = cv.resize(temp,self.imgSideSize)
+        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        #temp = Image.fromarray(temp)  
-        #self.imgSide = ImageTk.PhotoImage(image=temp) 
-        #self.panalSide.configure(image=self.imgSide) 
-        #self.panalSide.image = self.imgSide 
         cv.imshow("side", temp)
-        #cv.waitkey(1)
-        
     
     def rotate(self, origin, point, angle):
         """
@@ -627,7 +547,6 @@ class ScanOBJGenerator():
                 self.BL = self.rotate(halfTemp,self.BL,self.gridRotation)
                 self.BR = self.rotate(halfTemp,self.BR,self.gridRotation) 
                 if i < len(self.trayCSV):
-                #print(self.trayCSV)
                     temp = cv.putText(temp,self.trayCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
                     temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
                     temp = cv.putText(temp,self.trayCSV[i][0][self.trayCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
@@ -643,7 +562,6 @@ class ScanOBJGenerator():
                         pnt1 = (rowsX[o][0],rowsX[o][1])
                         pnt2 = (rowsX[o][2],rowsX[o][3])
                         temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
-    
                         # get the accrow values for the top row and bottom
                         topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
                         bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
@@ -660,16 +578,10 @@ class ScanOBJGenerator():
         temp = self.imageStack[int(val)-1,:,:].astype('uint8') 
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        temp = self.putGridOnImage(temp,val)                
-        #temp = cv.resize(temp,self.imgTopSize)  
+        temp = self.putGridOnImage(temp,val)
         if self.blobbed == True:
             temp[temp >= 1] = 255
-        #temp = Image.fromarray(temp)  
         cv.imshow("top", temp)
-        #cv.waitkey(1)
-        #self.imgTop = ImageTk.PhotoImage(image=temp)  
-        #self.panalTop.configure(image=self.imgTop) 
-        #self.panalTop.image = self.imgTop
 
     def image_resize(self,image, width = None, height = None, inter = cv.INTER_AREA): 
         # by thewaywewere https://stackoverflow.com/questions/44650888/resize-an-image-without-distortion-opencv accessed 11/11/19
@@ -701,7 +613,6 @@ class ScanOBJGenerator():
     def generateInfoFile(self):  
         self.resPopUp = InfoWindow(self.master) 
         self.master.wait_window(self.resPopUp.top)  
-        #print(self.resPopUp.value)
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 3: 
             print("do error")
@@ -720,16 +631,13 @@ class ScanOBJGenerator():
         imgstk = None 
         paths = os.listdir(path) 
         infoFile = ""
-        
         if len(paths) < 1: 
             showinfo("File Directory empty",path+ " : contains no files!")
             return imgstk
-                
         for i in range(len(paths)):
             if paths[i].endswith(".info"): 
                 infoFile = paths[i] 
                 break 
-        
         if infoFile == "":
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner!")
             return imgstk
@@ -765,8 +673,7 @@ class ScanOBJGenerator():
         if os.path.exists(path + '/' + imagePaths[0]):
             temp = cv.imread(path + '/' + imagePaths[0],0).astype("uint8")   
             imgstk = np.zeros((len(imagePaths),temp.shape[0],temp.shape[1])).astype("uint8")
-            for i in range(len(imagePaths)):        
-                #print(path + '/' + imagePaths[i])
+            for i in range(len(imagePaths)):
                 imgstk[i] = cv.imread(path + '/' + imagePaths[i],0).astype("uint8")
         else: 
             imgstk = np.zeros((10,10,10)) 
@@ -800,8 +707,7 @@ class ScanOBJGenerator():
             return
         
         self.resPopUp = DownsampleWindow(self.master) 
-        self.master.wait_window(self.resPopUp.top)  
-        #print(self.resPopUp.value)
+        self.master.wait_window(self.resPopUp.top)
         resolution = self.resPopUp.value 
         if len(resolution) < 1: 
             resolution = "1"
@@ -870,60 +776,18 @@ class ScanOBJGenerator():
         
         self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
         
-        # if self.imgTop.shape[0] > self.imgTop.shape[1] :
-        #     if self.imgTop.shape[0]  > self.maxSize: 
-        #         size = self.imgTop.shape[1]/(self.imgTop.shape[0]/self.maxSize)   
-        #         self.imgTopSize = (int(size),self.maxSize)
-        # else: 
-        #     if self.imgTop.shape[1]  > self.maxSize: 
-        #         size = self.imgTop.shape[0]/(self.imgTop.shape[1]/self.maxSize)
-        #         self.imgTopSize = (self.maxSize,int(size)) 
-        # self.imgTop = cv.resize(self.imgTop,self.imgTopSize)
-        
-        self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)  
-        #self.imgTop = Image.fromarray(self.imgTop) 
-        #self.imgTop = ImageTk.PhotoImage(image=self.imgTop)  
-        #self.panalTop = Label(self,image=self.imgTop)
-        #self.panalTop.grid(row=0,column=0)
+        self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         cv.imshow("top",self.imgTop)
         
         self.imgSide = self.imageStack[:,0,:].astype('uint8')  
-        #if self.downsampleFactor > 1: 
-            #self.imgSide = np.delete(self.imgSide,list(range(0,self.imgSide.shape[0],self.downsampleFactor)),axis=0)   
         self.imgSideSize = self.imgSide.shape
-
-        # if self.imgSideSize[0] > self.imgSideSize[1]: 
-        #     self.imgSide = self.image_resize(self.imgSide,height=self.maxSize)
-        # else: 
-        #     self.imgSide = self.image_resize(self.imgSide,width=self.maxSize) 
-        # self.imgSideSize = self.imgSide.shape
-        
         self.imgSide = cv.cvtColor(self.imgSide,cv.COLOR_GRAY2RGB) 
-        #self.imgSide = Image.fromarray(self.imgSide) 
-        #self.imgSide = ImageTk.PhotoImage(image=self.imgSide)  
-        #self.panalSide = Label(self,image=self.imgSide)
-        #self.panalSide.grid(row=0,column=1)     
         cv.imshow("side", self.imgSide)
         
         self.imgFront = self.imageStack[:,:,0].astype('uint8') 
-        #if self.downsampleFactor > 1: 
-           # self.imgFront = np.delete(self.imgFront,list(range(0,self.imgFront.shape[0],self.downsampleFactor)),axis=0) 
-
-        self.imgFrontSize = self.imgFront.shape  
-        # if self.imgFrontSize[0] > self.imgFrontSize[1]: 
-        #     self.imgFront = self.image_resize(self.imgFront,height=self.maxSize)
-        # else: 
-        #     self.imgFront = self.image_resize(self.imgFront,width=self.maxSize) 
-        # self.imgFrontSize = self.imgFront.shape
-        
-        
-        self.imgFront = cv.cvtColor(self.imgFront,cv.COLOR_GRAY2RGB) 
-        #self.imgFront = Image.fromarray(self.imgFront) 
-        #self.imgFront = ImageTk.PhotoImage(image=self.imgFront)  
-        #self.panalFront = Label(self,image=self.imgFront)
-        #self.panalFront.grid(row=0,column=2)
+        self.imgFrontSize = self.imgFront.shape
+        self.imgFront = cv.cvtColor(self.imgFront,cv.COLOR_GRAY2RGB)
         cv.imshow("front", temp)
-        #cv.waitkey(1)
         
         # bars for showing scale
         self.frontBar = Scale(self.master, from_=1, to=self.imageStack.shape[2], orient=HORIZONTAL, length=self.winWidth/3, sliderlength=self.winHeight//100, command=self.frontSlider)
