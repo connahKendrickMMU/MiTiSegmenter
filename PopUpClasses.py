@@ -16,6 +16,19 @@ class InfoWindow(object):
         self.value=self.infoEntry.get()
         self.top.destroy() 
         
+class RawInfoWindow(object):
+    def __init__(self,master):
+        top=self.top=Toplevel(master)
+        self.infoLabel=Label(top,text="Please enter file resoltuion (width,height,layers and bit rate, scanner will provide details) \n with ; to separate values.Adjust this to calculate if the resolution makes sense.")
+        self.infoLabel.pack()
+        self.infoEntry=Entry(top)
+        self.infoEntry.pack()
+        self.infoButton=Button(top,text='Ok',command=self.cleanup)
+        self.infoButton.pack()
+    def cleanup(self):
+        self.value=self.infoEntry.get()
+        self.top.destroy() 
+
 class DownsampleWindow(object):
     def __init__(self,master):
         top=self.top=Toplevel(master)
