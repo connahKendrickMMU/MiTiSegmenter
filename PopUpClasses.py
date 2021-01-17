@@ -6,7 +6,7 @@ from tkinter.messagebox import showinfo
 class InfoWindow(object):
     def __init__(self,master):
         top=self.top=Toplevel(master)
-        self.infoLabel=Label(top,text="Please enter file resoltuion with ; to separate values")
+        self.infoLabel=Label(top,text="Please enter file resolution with ; to separate values")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
         self.infoEntry.pack()

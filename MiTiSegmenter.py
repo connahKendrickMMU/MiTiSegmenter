@@ -17,16 +17,19 @@ import shutil
 
 # our files
 from PopUpClasses import *
-
+from Frames import *
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
 ####### Build exe ####### 
 # need add path to dask.yaml and distribution.yaml in you python Lib/site-packages/(dask or distribution)
-class ScanOBJGenerator(): 
+
+class MiTiSegmenter(tk.Tk): 
     # initialisation 
-    def __init__(self,master): 
-        master.report_callback_exception = self.showError
-        self.master = master
+    def __init__(self, *args, **kwargs): 
+        tk.Tk.__init__(self, *args, **kwargs) 
+        #master.report_callback_exception = self.showError 
+        tk.report_callback_exception = self.showError
+        #self.master = master
         self.thresholdMax = 255  
         self.thresholdMin = 0
         self.blobMinSizeVal = 50
@@ -36,8 +39,8 @@ class ScanOBJGenerator():
         #self.imgTopSize = (0,0) 
         #self.imgSideSize = (0,0) 
         #self.imgFrontSize = (0,0) 
-        self.winWidth = master.winfo_screenwidth()
-        self.winHeight = master.winfo_screenheight()
+        #self.winWidth = master.winfo_screenwidth()
+        #self.winHeight = master.winfo_screenheight()
         self.gridSize = (0,0)
         self.gridCenter = (0,0)
         self.gridRotation = 0
@@ -46,7 +49,7 @@ class ScanOBJGenerator():
         self.layers = []
         self.traySize = 50
         self.trayCSV = [] 
-        self.init_GUI(master) 
+        #self.init_GUI(master) 
         self.workingPath = "" 
         self.blobCenterOfMass = []
         self.TL = 0 
@@ -55,14 +58,40 @@ class ScanOBJGenerator():
         self.BR = 0
         self.blobbed = False
         self.slides = [0,0,0]
-        
-    def init_GUI(self,master):
-        #main window title and size
-        master.title("MiTiSegmenter") 
-
+        print(" doo this tk.title(\"MiTiSegmenter\")")
         self.imageStack = None 
+        # creating a container 
+        container = tk.Frame(self)   
+        container.pack(side = "top", fill = "both", expand = True)  
+        container.grid_rowconfigure(0, weight = 1) 
+        container.grid_columnconfigure(0, weight = 1) 
+        # create the frames
+        self.frames = {}   
+        for F in (StartPage, StackOptions, SeperateTrays, SeperateTrays, ThresAndCellStack, LabelImages, TrayStack, Export):
+            frame = F(container, self) 
+            self.frames[F] = frame  
+            frame.grid(row = 0, column = 0, sticky ="nsew") 
+        self.show_frame(StartPage) 
+        
+    def show_frame(self, cont): 
+        frame = self.frames[cont] 
+        frame.tkraise() 
+    
+    def LoadImagesSelected(self, cont, Raw = False):
+        completed = True
+        if Raw == True:
+            completed = self.loadRawStack()
+        else:
+            completed = self.loadImages()
+        if completed == True:
+            frame = self.frames[cont] 
+            frame.tkraise()
+        
+    #def init_GUI(self,master):
+        #main window title and size
+        
         # tool bar
-        menubar = Menu(master)  
+        '''menubar = Menu(master)  
         master.config(menu=menubar) 
         fileMenu = Menu(menubar)  
         fileMenu.add_command(label="Load Images", command=self.loadImages) 
@@ -141,7 +170,7 @@ class ScanOBJGenerator():
         self.cellBar = Scale(master, from_=1, to=255, orient=HORIZONTAL, label="Cel-shade Base Value", length=self.winWidth/3.6, sliderlength=self.winHeight//100, command=self.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(self.cellBase)
-        master.report_callback_exception = self.showError
+        master.report_callback_exception = self.showError'''
         
     def showError(self, *args):
         err = traceback.format_exception(*args) 
@@ -354,6 +383,19 @@ class ScanOBJGenerator():
         except: 
             print("file not working properly") 
 
+    def ExportUnProcessedStack(self):
+        savepath = os.path.join(self.workingPath,"ExportImages")
+        if os.path.exists(os.path.join(self.workingPath,"ExportImages")) == False:
+            os.mkdir(os.path.join(self.workingPath,"ExportImages"))
+        for i in range(self.imageStack.shape[0]):
+            cv.imwrite(os.path.join(savepath,str(i)+".tiff"), self.imageStack[i]) 
+        infoFile = open(os.path.join(savepath,str(i)+"a_info.info"),"w") 
+        infoFile.write("pixelsize " + str(resolution[0]) + " " + str(resolution[1]) + "\n") 
+        infoFile.write("offset 0 0\n") 
+        for i in range(self.imageStack.shape[0]):
+            infoFile.write(os.path.join(savepath,str(i)+".tiff") + " " + str(self.pixelSizeZ*i) +"\n") 
+        infoFile.close()
+            
     def makeAllPointCloud(self):  
          if self.imageStack is None: 
              return
@@ -693,21 +735,22 @@ class ScanOBJGenerator():
         print(path)
         if path == "": 
             # file loading canceled
-            return
+            return False
         print("loading images")
         self.blobbed = False
         self.imageStack = None
         self.workingPath = os.path.dirname(path)
         self.resPopUp = RawInfoWindow(self.master) 
-        self.master.wait_window(self.resPopUp.top)  
+        self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 4: 
             print("do error")
-            return
+            return False
         resolution[0] = int(resolution[0])
         resolution[1] = int(resolution[1])
         resolution[2] = int(resolution[2])
         resolution[3] = int(resolution[3])
+        height = resolution[2]
         print(resolution)
         bitType = np.uint8
         if(resolution[3] == 16):
@@ -730,14 +773,21 @@ class ScanOBJGenerator():
         image.close()
         self.imagePaths = []
         self.imagesHeightSlice = []
-        self.pixelSizeX = resolution[0] 
-        self.pixelSizeY = resolution[1] 
-        self.pixelSizeZ = resolution[2]
+        self.resPopUp = InfoWindow(self.master) 
+        self.wait_window(self.resPopUp.top)  
+        resolution = self.resPopUp.value.split(";") 
+        if len(resolution) < 3: 
+            print("do error")
+            return False
+        self.pixelSizeX = float(resolution[0])
+        self.pixelSizeY = float(resolution[1])
+        self.pixelSizeZ = float(resolution[2])
         self.offsetX = 0 
         self.offsetY = 0 
-        for i in range(resolution[2]):
+        for i in range(height):
             self.imagesHeightSlice.append(i*self.pixelSizeZ)
         self.setInitGraphs()
+        return True
         
     def loadImages(self):
         path = filedialog.askdirectory() 
@@ -753,7 +803,7 @@ class ScanOBJGenerator():
         
         if len(paths) < 1: 
             showinfo("File Directory empty",path+ " : contains no files!")
-            return 
+            returnFalse
                 
         for i in range(len(paths)):
             if paths[i].endswith(".info"): 
@@ -762,14 +812,14 @@ class ScanOBJGenerator():
         
         if infoFile == "":
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner!")
-            return
+            return False
         
         self.resPopUp = DownsampleWindow(self.master) 
         self.master.wait_window(self.resPopUp.top)
         resolution = self.resPopUp.value 
         if len(resolution) < 1: 
             resolution = "1"
-            return
+            return False
         
         self.downsampleFactor = int(resolution)
         info = open(path+'/'+infoFile,'r')  
@@ -805,21 +855,22 @@ class ScanOBJGenerator():
             print("\rprocessing image : " + str(i) + " of " + str(len(self.imagePaths)),end=" ")
             if os.path.isfile(path + '/' + self.imagePaths[i]) == False: 
                 showinfo("Image not found", path + '/' + self.imagePaths[i] + " : does not exist check the file if at this location")
-                return
+                return False
             self.imageStack[i] = cv.resize(cv.imread(path + '/' + self.imagePaths[i],0).astype("uint8"),(temp.shape[1]//self.downsampleFactor,temp.shape[0]//self.downsampleFactor))
-            tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
-            tempim = cv.putText(tempim,(str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
-            cv.imshow("top",tempim) 
-            cv.waitKey(1)
+            #tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
+            #tempim = cv.putText(tempim,(str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+            #cv.imshow("top",tempim) 
+            #cv.waitKey(1)
         # get the bottom image (default in the scan)
         self.setInitGraphs()
+        return True
             
     def setInitGraphs(self):
         self.imgTop = self.imageStack[0,:,:]
         #self.imgTopSize = self.imgTop.shape
         self.gridSize = ( ((self.imgTop.shape[0]//10)*9)//2, ((self.imgTop.shape[1]//10)*3)//2)
         
-        self.ScaleGridBarH = Scale(self.master, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeHor) 
+        '''self.ScaleGridBarH = Scale(self.master, from_=0, to=(self.imgTop.shape[0]//2), orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winWidth/6, sliderlength=self.winHeight//100, command=self.adjustGridSizeHor) 
         self.ScaleGridBarH.grid(row=4,column=1,sticky = NW) 
         self.ScaleGridBarH.set(self.gridSize[0])
         
@@ -835,7 +886,7 @@ class ScanOBJGenerator():
         self.GridMidY.grid(row=5,column=1,sticky = NE)
         self.GridMidY.set(self.imgTop.shape[1]//2)
         
-        self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
+        self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)'''
         
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         #cv.imshow("top",self.imgTop)
@@ -923,6 +974,6 @@ class ScanOBJGenerator():
             temp[temp >= 1] = 255
         self.lTop.set_data(temp)
         self.figTop.canvas.draw_idle()
-root = tk.Tk()
-app = ScanOBJGenerator(root) 
-root.mainloop()
+
+app = MiTiSegmenter() 
+app.mainloop()
