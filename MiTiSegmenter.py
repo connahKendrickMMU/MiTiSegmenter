@@ -33,7 +33,7 @@ class MiTiSegmenter(tk.Tk):
         self.thresholdMax = 255  
         self.thresholdMin = 0
         self.blobMinSizeVal = 50
-        self.downsampleFactor = 4
+        self.downsampleFactor = 1
         self.cellBase = 1
         self.usedThres =(0,0)
         #self.imgTopSize = (0,0) 
@@ -50,7 +50,9 @@ class MiTiSegmenter(tk.Tk):
         self.traySize = 50
         self.trayCSV = [] 
         #self.init_GUI(master) 
+        self.imagePaths =[]
         self.workingPath = "" 
+        self.RawPath = ""
         self.blobCenterOfMass = []
         self.TL = 0 
         self.TR = 0
@@ -190,7 +192,7 @@ class MiTiSegmenter(tk.Tk):
         if len(self.layers) == 0:
             print("no layers created")
         self.resTrayPopUp = GetTrayCSVs(self.master,self.layers) 
-        self.master.wait_window(self.resTrayPopUp.top)  
+        self.wait_window(self.resTrayPopUp.top)  
         self.resTrayPopUp = self.resTrayPopUp.value
         self.resTrayPopUp = self.resTrayPopUp.split("*")
         for i in range(len(self.resTrayPopUp)):
@@ -291,17 +293,19 @@ class MiTiSegmenter(tk.Tk):
         self.refreshImages()
     
     def adjustThresholdMax(self,val):
-        if int(val) <= self.thresholdMin: 
-            self.thresholdBar.set(self.thresholdMin+1) 
-        else:
-            self.thresholdMax = int(val)
+        #if int(val) <= self.thresholdMin: 
+        #    self.thresholdBar.set(self.thresholdMin+1) 
+        #else:
+        #    self.thresholdMax = int(val)
+        self.thresholdMax = int(val)
         self.refreshImages() 
         
     def adjustThresholdMin(self,val):
-        if int(val) >= self.thresholdMax:
-            self.thresholdBarMin.set(self.thresholdMax-1)
-        else:
-            self.thresholdMin = int(val)
+        #if int(val) >= self.thresholdMax:
+        #    self.thresholdBarMin.set(self.thresholdMax-1)
+        #else:
+        #    self.thresholdMin = int(val)
+        self.thresholdMin = int(val)
         self.refreshImages()
         
     def adjustGridRotation(self,val):
@@ -343,8 +347,9 @@ class MiTiSegmenter(tk.Tk):
     def blobDetection(self): 
         if self.imageStack is None:
             return  
+        
         self.imageStack[self.imageStack != 0] = 255 
-        self.imageStack = measure.label(self.imageStack) 
+        self.imageStack = measure.label(self.imageStack)
         self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)
         self.blobbed = True
         self.refreshImages()
@@ -383,19 +388,30 @@ class MiTiSegmenter(tk.Tk):
         except: 
             print("file not working properly") 
 
-    def ExportUnProcessedStack(self):
+    def ExportUnProcessedStack(self, processed = False):
         savepath = os.path.join(self.workingPath,"ExportImages")
         if os.path.exists(os.path.join(self.workingPath,"ExportImages")) == False:
             os.mkdir(os.path.join(self.workingPath,"ExportImages"))
         for i in range(self.imageStack.shape[0]):
-            cv.imwrite(os.path.join(savepath,str(i)+".tiff"), self.imageStack[i]) 
+            #if processed == False:
+            cv.imwrite(os.path.join(savepath,str(i).zfill(6)+".tiff"), self.imageStack[i]) 
+            #else:
+                #cv.imwrite(os.path.join(savepath,str(i)+".tiff"),self.ViewImagePreviews(self.imageStack[i],1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase, final = True))
         infoFile = open(os.path.join(savepath,str(i)+"a_info.info"),"w") 
-        infoFile.write("pixelsize " + str(resolution[0]) + " " + str(resolution[1]) + "\n") 
+        infoFile.write("pixelsize " + str(self.pixelSizeX) + " " + str(self.pixelSizeY) + "\n") 
         infoFile.write("offset 0 0\n") 
         for i in range(self.imageStack.shape[0]):
-            infoFile.write(os.path.join(savepath,str(i)+".tiff") + " " + str(self.pixelSizeZ*i) +"\n") 
+            infoFile.write(os.path.join(savepath,str(i).zfill(6)+".tiff") + " " + str(self.pixelSizeZ*i) +"\n") 
+            self.imagePaths.append(os.path.join(savepath,str(i).zfill(6)+".tiff"))
+        if processed == True:
+            showinfo("Stack Saved!","Unprocessed stack saved to:\n"+savepath)
         infoFile.close()
-            
+    
+    def DeleteTempStack(self):
+        for i in range(len(self.imagePaths)):
+            os.remove(self.imageOaths[i])
+        self.imagePaths = []
+        
     def makeAllPointCloud(self):  
          if self.imageStack is None: 
              return
@@ -434,7 +450,11 @@ class MiTiSegmenter(tk.Tk):
                  print("check this +1 doenst break anything")
                  infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
                  print("create a flag for raw image loads that cycles through the file again")
-                 img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+                 img = None
+                 if self.RawPath:
+                     img = cv.imread(self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+                 else:
+                     img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
                  if imType == 1: #processed 
                      img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.processSingleTray(img) 
                  elif imType == 2: # segmentation 
@@ -447,15 +467,60 @@ class MiTiSegmenter(tk.Tk):
          if self.imageStack is None: 
              return
          self.resPopUp = GenerateTiffStackWindow(self.master) 
-         self.master.wait_window(self.resPopUp.top)  
+         self.wait_window(self.resPopUp.top)  
          self.resPopUp.value = self.resPopUp.value.split(';')
          generateRaw = int(self.resPopUp.value[0])
          generatePro = int(self.resPopUp.value[1])
          generateMod = int(self.resPopUp.value[2])
          generateSeg = int(self.resPopUp.value[3]) 
+         if self.RawPath:
+             self.ExportUnProcessedStack()
          if os.path.isdir(self.workingPath + '/'+"blobstacks") == False:
              os.mkdir(self.workingPath + '/'+"blobstacks")
-         self.imageStack = self.ViewImagePreviews(self.imageStack,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+         #self.imageStack = self.ViewImagePreviews(self.imageStack,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase, final = True)
+         shape = self.imageStack.shape
+         ######### new code here
+         self.imageStack = None 
+         stack = None
+         bounds = [] 
+         blobCenters = [] 
+         gridCenters = [] 
+         gridNames = []
+         TrayToBlob = []
+         for i in range(shape[0]): 
+             img = cv.imread(self.imagePaths[i],0)
+             #print(img.shape)
+             img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+             if img.max() > 0: 
+                 if stack is None: 
+                     stack = img
+                 else:
+                     if len(stack.shape) < 3:
+                         stack = np.stack((img,stack))
+                     else: 
+                         stack = np.concatenate((stack, img.reshape((1,img.shape[0],img.shape[1]))))
+             else:
+                 if stack is None:
+                     continue
+                 else: 
+                     stack[stack != 0] = 255 
+                     stack = measure.label(stack)
+                     stack = morphology.remove_small_objects(stack, min_size=self.blobMinSizeVal)
+                     unique = np.unique(stack)
+                     for o in range(unique.shape[0]):  
+                         print("\r Getting blobs  : "+str(o),end=" ")
+                         if unique[o] == 0: # background 
+                             continue
+                         currentBlob = np.where(stack == unique[o])
+                         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1))+i
+                         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))*self.downsampleFactor
+                         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
+                         # padd the bound by the down sample rate
+                         bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                         blobCenters.append( ( (np.amin(Z)+np.amax(Z))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                     stack = None
+         '''for i in range(self.imageStack.shape[0]):
+             self.imageStack[i] == self.ViewImagePreviews(self.imageStack[i],1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase, final = True)
          self.blobDetection()
          unique = np.unique(self.imageStack)
          bounds = [] 
@@ -473,7 +538,7 @@ class MiTiSegmenter(tk.Tk):
              X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
              # padd the bound by the down sample rate
              bounds.append((np.amin(Z),np.amax(Z),np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-             blobCenters.append( ( (np.amin(Z)+np.amax(Z))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+             blobCenters.append( ( (np.amin(Z)+np.amax(Z))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))'''
          if len(self.layers) > 0:
              self.flipTrayVer()
              for i in range(len(self.layers)): 
@@ -541,14 +606,18 @@ class MiTiSegmenter(tk.Tk):
                           # folder containing the tiff stacks
                           stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
                           self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o])
+         if RawPath:
+                  self.DeleteTempStack()
          
-    def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell):
+    def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell, final = False):
         if viewCell == 1: 
            img = img-(img%cell)
         if viewThres == 1: 
             img[img >= thresMax] = 0   
             img[img <= thresMin] = 0
-        return img
+        if final == True:
+            img[img > 0] == 255
+        return img.astype("uint8")
     
     def frontSlider(self,val): 
         # right image
@@ -661,7 +730,7 @@ class MiTiSegmenter(tk.Tk):
     
     def generateInfoFile(self):  
         self.resPopUp = InfoWindow(self.master) 
-        self.master.wait_window(self.resPopUp.top)  
+        self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 3: 
             print("do error")
@@ -740,6 +809,7 @@ class MiTiSegmenter(tk.Tk):
         self.blobbed = False
         self.imageStack = None
         self.workingPath = os.path.dirname(path)
+        self.RawPath = path
         self.resPopUp = RawInfoWindow(self.master) 
         self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
@@ -765,7 +835,11 @@ class MiTiSegmenter(tk.Tk):
         for i in range(resolution[2]):
             img = np.fromfile(image, dtype = bitType, count = img_size)
             img.shape = (resolution[1],resolution[0])
-            img = img * (255/img.max())
+            #img = img * (np.iinfo(bitType).max/img.max())
+            maxV = np.iinfo(bitType).max
+            img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
+            #img *= np.iinfo(bitType).max()/img.max()
+            #img  = cv.normalize(img, None, 0, 255, cv.NORM_MINMAX, dtype=cv.CV_8U)
             self.imageStack[i] = img
             #cv.imshow("front", img)
             #cv.waitKey(1)
@@ -815,7 +889,7 @@ class MiTiSegmenter(tk.Tk):
             return False
         
         self.resPopUp = DownsampleWindow(self.master) 
-        self.master.wait_window(self.resPopUp.top)
+        self.wait_window(self.resPopUp.top)
         resolution = self.resPopUp.value 
         if len(resolution) < 1: 
             resolution = "1"
@@ -974,6 +1048,49 @@ class MiTiSegmenter(tk.Tk):
             temp[temp >= 1] = 255
         self.lTop.set_data(temp)
         self.figTop.canvas.draw_idle()
+        
+    def updateCellHelp(self, val):
+        ampCellHelp = val
+        self.lCellHelp.set_ydata(self.sCellHelp-(self.sCellHelp%ampCellHelp))
+        self.figCellHelp.canvas.draw_idle()
+        
+    def ShowCellHelp(self):
+        self.figCellHelp, ax = plt.subplots()
+        self.figCellHelp.canvas.set_window_title('Cell-Shade example')
+        plt.subplots_adjust(bottom=0.4)
+        t = np.arange(1, 255, 1)
+        self.sCellHelp = t
+        self.lCellHelp, = plt.plot(t, self.sCellHelp, lw=2)
+        ax.margins(x=0,y=0)
+        axcolor = 'lightgoldenrodyellow'
+        axampCellHelp = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
+        sampCellHelp = Slider(axampCellHelp, 'Cell-base', 1, 255, valinit=0)
+        
+        sampCellHelp.on_changed(self.updateCellHelp)
+        plt.title('Cell-shading is a technique of grouping similar values. \n If you move the bar you\'ll see the bar becomes a staircase as values are grouped.\n This helps remove the human error with small values')
+        plt.show()
+        
+    def updateThresHelp(self, val):
+        ampThresHelp = val
+        temp[self.sThresHelp <= ampThresHelp] = 0
+        self.lThresHelp.set_ydata(temp)
+        self.figThresHelp.canvas.draw_idle()
+        
+    def ShowThresHelp(self):
+        self.figThresHelp, ax = plt.subplots()
+        self.figThresHelp.canvas.set_window_title('Thres-Shade example')
+        plt.subplots_adjust(bottom=0.4)
+        t = np.arange(1, 255, 1)
+        self.sThresHelp = t
+        self.lThresHelp, = plt.plot(t, self.sThresHelp, lw=2)
+        ax.margins(x=0,y=0)
+        axcolor = 'lightgoldenrodyellow'
+        axampThresHelp = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
+        sampThresHelp = Slider(axampThresHelp, 'Thres-base', 1, 255, valinit=0)
+        
+        sampThresHelp.on_changed(self.updateThresHelp)
+        plt.title('Thresholes remove all values out side of a range')
+        plt.show()
 
 app = MiTiSegmenter() 
 app.mainloop()
