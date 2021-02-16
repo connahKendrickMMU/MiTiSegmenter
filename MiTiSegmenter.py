@@ -15,7 +15,7 @@ import open3d as o3d
 import shutil
 
 
-# our files
+# our file
 from PopUpClasses import *
 from Frames import *
 ####### version info #######
@@ -64,12 +64,13 @@ class MiTiSegmenter(tk.Tk):
         self.imageStack = None 
         # creating a container 
         container = tk.Frame(self)   
+        #container.title("MiTiSegmenter")
         container.pack(side = "top", fill = "both", expand = True)  
         container.grid_rowconfigure(0, weight = 1) 
         container.grid_columnconfigure(0, weight = 1) 
         # create the frames
         self.frames = {}   
-        for F in (StartPage, StackOptions, SeperateTrays, SeperateTrays, ThresAndCellStack, LabelImages, TrayStack, Export):
+        for F in (StartPage, StackOptions, SeperateTrays, SeperateTrays, ThresAndCellStack, LabelImages, TrayStack,  TrayAlign, Export):
             frame = F(container, self) 
             self.frames[F] = frame  
             frame.grid(row = 0, column = 0, sticky ="nsew") 
@@ -124,8 +125,8 @@ class MiTiSegmenter(tk.Tk):
         self.thresholdBarMin.set(self.thresholdMin)
 
         # traying
-        self.listboxValues = Listbox(master) 
-        self.listboxValues.grid(row=2, column = 2, rowspan=2, sticky = W)
+        listboxValues = Listbox(master) 
+        listboxValues.grid(row=2, column = 2, rowspan=2, sticky = W)
         
         self.applyTrayBtn = Button(master, text="Apply Traying",command=self.applyTray)
         self.applyTrayBtn.grid(row=2,column=1,sticky = N)
@@ -206,10 +207,10 @@ class MiTiSegmenter(tk.Tk):
                 self.trayCSV.append(tray)
         self.refreshImages()
     
-    def deleteTray(self): 
-        if self.listboxValues.size() > 0:
-            self.layers.pop(self.listboxValues.curselection()[0])
-            self.listboxValues.delete(self.listboxValues.curselection()[0])
+    def deleteTray(self,listboxValues): 
+        if listboxValues.size() > 0:
+            self.layers.pop(listboxValues.curselection()[0])
+            listboxValues.delete(listboxValues.curselection()[0])
             self.refreshImages
          
     def addTray(self):
@@ -234,10 +235,10 @@ class MiTiSegmenter(tk.Tk):
                 lastOn = o
             infoFile.close()
         
-    def applyTray(self):  
+    def applyTray(self,listboxValues):  
         onTray = False
         self.layers = [] 
-        self.listboxValues.delete(0,self.listboxValues.size())
+        listboxValues.delete(0,listboxValues.size())
         trayStart = 0
         trayCount = 0
         for i in range(0,self.imageStack.shape[0]): 
@@ -260,7 +261,7 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)): 
             self.gridSize.append(( ((temp.shape[0]//10)*9)//2, ((temp.shape[1]//10)*3)//2))
         for i in range(len(self.layers)):
-            self.listboxValues.insert(END,"tray : "+ str(i+1) + "_" +str(self.layers[i]))
+            listboxValues.insert(END,"tray : "+ str(i+1) + "_" +str(self.layers[i]))
         self.refreshImages()
         
     def cellShade(self):
@@ -652,9 +653,9 @@ class MiTiSegmenter(tk.Tk):
     def putGridOnImage(self,temp, val): 
         for i in range(len(self.layers)): 
             if self.layers[i] < int(val) + self.traySize and self.layers[i] > int(val) - self.traySize:
-                self.ScaleGridBarV.set(self.gridSize[i][1]) 
-                self.ScaleGridBarH.set(self.gridSize[i][0])
-
+                print("need redo scale bars")
+                #self.ScaleGridBarV.set(self.gridSize[i][1]) 
+                #self.ScaleGridBarH.set(self.gridSize[i][0])
                 halfTemp = (self.gridCenter[0],self.gridCenter[1])
                 self.TL = (halfTemp[0]-self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1])
                 self.TR = (halfTemp[0]+self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1]) 
@@ -821,7 +822,7 @@ class MiTiSegmenter(tk.Tk):
         resolution[2] = int(resolution[2])
         resolution[3] = int(resolution[3])
         height = resolution[2]
-        print(resolution)
+        #print(resolution)
         bitType = np.uint8
         if(resolution[3] == 16):
             bitType = np.uint16
@@ -1093,4 +1094,5 @@ class MiTiSegmenter(tk.Tk):
         plt.show()
 
 app = MiTiSegmenter() 
+app.title("MiTiSegmenter")
 app.mainloop()
