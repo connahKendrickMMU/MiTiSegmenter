@@ -244,6 +244,7 @@ class MiTiSegmenter(tk.Tk):
         for i in range(0,self.imageStack.shape[0]): 
             temp = self.imageStack[i,:,:].astype('uint8') 
             temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+            
             if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10:
                 if onTray == False: 
                     onTray = True
@@ -256,6 +257,10 @@ class MiTiSegmenter(tk.Tk):
                     self.layers.append(trayStart + (trayCount//2))
                     trayStart = 0
                     trayCount = 0
+            tempim = cv.putText(temp,("Checking for objects image " + str(i+1) + ' / ' + str(resolution[2])) + ' ' +str(OnTray),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+            cv.imshow("loading",tempim) 
+            cv.waitKey(1)
+        cv.destroyAllWindows
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
@@ -842,10 +847,15 @@ class MiTiSegmenter(tk.Tk):
             #img *= np.iinfo(bitType).max()/img.max()
             #img  = cv.normalize(img, None, 0, 255, cv.NORM_MINMAX, dtype=cv.CV_8U)
             self.imageStack[i] = img
+            tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
+            tempim = cv.putText(tempim,("loading image " + str(i+1) + ' / ' + str(resolution[2])),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+            cv.imshow("loading",tempim) 
+            cv.waitKey(1)
             #cv.imshow("front", img)
             #cv.waitKey(1)
             #img = img.astype("uint8")
         image.close()
+        cv.destroyAllWindows()
         self.imagePaths = []
         self.imagesHeightSlice = []
         self.resPopUp = InfoWindow(self.master) 
@@ -932,10 +942,11 @@ class MiTiSegmenter(tk.Tk):
                 showinfo("Image not found", path + '/' + self.imagePaths[i] + " : does not exist check the file if at this location")
                 return False
             self.imageStack[i] = cv.resize(cv.imread(path + '/' + self.imagePaths[i],0).astype("uint8"),(temp.shape[1]//self.downsampleFactor,temp.shape[0]//self.downsampleFactor))
-            #tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
-            #tempim = cv.putText(tempim,(str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
-            #cv.imshow("top",tempim) 
-            #cv.waitKey(1)
+            tempim = cv.cvtColor(self.imageStack[i],cv.COLOR_GRAY2RGB)
+            tempim = cv.putText(tempim,("loading image " + str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+            cv.imshow("loading",tempim) 
+            cv.waitKey(1)
+        cv2.destroyAllWindows()
         # get the bottom image (default in the scan)
         self.setInitGraphs()
         return True

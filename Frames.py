@@ -164,17 +164,17 @@ class TrayStack(tk.Frame):
         button2.grid(row = 1, column = 0, padx = 10, pady = 10)   
         CreateToolTip(button2,"Automatically try to find the center of trays in the scan")
         
-        removeTray = Button(self, text ="remove tray",command = lambda : deleteTray(listboxValues)) 
+        removeTray = Button(self, text ="remove tray",command = lambda : self.deleteTray(listboxValues, controller)) 
         removeTray.grid(row = 1, column = 1, padx = 10, pady = 10)   
         CreateToolTip(removeTray,"Select a tray you want to delete and then press this button to remove the tray")
         
-        addTray = Button(self, text ="add tray",command = lambda : addTray(listboxValues)) 
+        addTray = Button(self, text ="add tray",command = lambda : controller.addTray(listboxValues)) 
         addTray.grid(row = 1, column = 2, padx = 10, pady = 10)   
         CreateToolTip(addTray,"Use the top slider and click the add tray button\n,to add this as a slice")
         
         
         
-    def deleteTray(self,listboxValues): 
+    def deleteTray(self,listboxValues, controller): 
         if listboxValues.size() > 0:
             controller.layers.pop(listboxValues.curselection()[0])
             listboxValues.delete(listboxValues.curselection()[0])
