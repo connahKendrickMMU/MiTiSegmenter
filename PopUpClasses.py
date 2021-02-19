@@ -85,7 +85,7 @@ class GetTrayCSVs(object):
         self.infoButton.pack()
     def getCSVFiles(self):
         for i in range(len(self.trayCount)):
-            temp = filedialog.askopenfilename()
+            temp = filedialog.askopenfilename(filetypes = (("csv files","*.csv"),("all files","*.*")))
             if temp == '': 
                 temp = ' '
             self.paths = self.paths+temp+"*"  

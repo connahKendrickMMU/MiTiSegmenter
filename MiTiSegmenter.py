@@ -178,10 +178,10 @@ class MiTiSegmenter(tk.Tk):
             listboxValues.insert(END,"tray : "+ str(i+1) + "_" +str(self.layers[i]))
         self.refreshImages()
         
-    def cellShade(self):
+    '''def cellShade(self):
         self.imageStack = self.imageStack-(self.imageStack%self.cellBase)
         self.usedThres = (self.usedThres[0],1)
-        self.refreshImages()
+        self.refreshImages()'''
     
     def removeblobDensity(self): 
         for i in range(self.imageStack.shape[0]): 
@@ -231,14 +231,14 @@ class MiTiSegmenter(tk.Tk):
                 self.gridSize[i] = (self.gridSize[i][0],int(val)) 
         self.refreshImages()
     
-    def applyThreshold(self): 
+    '''def applyThreshold(self): 
         if self.imageStack is None: 
             return
         self.imageStack[self.imageStack <= self.thresholdMin] = 0    
         self.imageStack[self.imageStack >= self.thresholdMax] = 0 
         self.viewThresholdVar.set(0) 
         self.usedThres = (1,self.usedThres[1])
-        self.refreshImages()
+        self.refreshImages()'''
         
     def refreshImages(self):  
         if self.imageStack is None: 
@@ -247,20 +247,20 @@ class MiTiSegmenter(tk.Tk):
         self.updateSide(self.slides[1])
         self.updateTop(self.slides[2])
     
-    def blobDetection(self): 
+    '''def blobDetection(self): 
         if self.imageStack is None:
             return  
         self.imageStack[self.imageStack != 0] = 255 
         self.imageStack = measure.label(self.imageStack)
-        self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=self.blobMinSizeVal)
+        #self.imageStack = morphology.remove_small_objects(self.imageStack, min_size=(self.blobMinSizeVal*self.blobMinSizeVal*self.blobMinSizeVal))
         self.blobbed = True
-        self.refreshImages()
+        self.refreshImages()'''
     
-    def organiseBlobs(self, unique): 
+    '''def organiseBlobs(self, unique): 
         numOn = 0 
         for i in range(unique.shape[0]):
             self.imageStack[self.imageStack == unique[i]] == numOn 
-            numOn = numOn + 1
+            numOn = numOn + 1'''
     
     def generate3DModel(self,img,path):
         if img is None: 
@@ -410,12 +410,12 @@ class MiTiSegmenter(tk.Tk):
                  if stack is None:
                      continue
                  else: 
-                     stack[stack != 0] = 255 
+                     stack[stack != 0] = 1 
+                     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal*self.blobMinSizeVal*self.blobMinSizeVal)).astype("uint8")
                      stack = measure.label(stack)
-                     stack = morphology.remove_small_objects(stack, min_size=self.blobMinSizeVal)
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
-                         print("\r Getting blobs  : "+str(o),end=" ")
+                         print("\r Getting blobs  : "+str(o) + " of " + str(unique.shape[0]),end=" ")
                          if unique[o] == 0: # background 
                              continue
                          currentBlob = np.where(stack == unique[o])
@@ -423,8 +423,9 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
                          # padd the bound by the down sample rate
-                         bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                         blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                         if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                             bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
                      start = 0
          if len(self.layers) > 0:
@@ -743,7 +744,8 @@ class MiTiSegmenter(tk.Tk):
                 break 
         
         if infoFile == "":
-            showinfo("No Scanner info file", path + " : contains no .info file from the scanner!")
+            showinfo("No Scanner info file", path + " : contains no .info file from the scanner!\nLets create one now, then reload the stack")
+            self.generateInfoFile()
             return False
         
         self.resPopUp = DownsampleWindow(self.master) 
@@ -833,6 +835,12 @@ class MiTiSegmenter(tk.Tk):
         axes3 = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=color)
         self.topSlide = Slider(axes3, 'Top Slices', 0, self.imageStack.shape[0]-1, valinit=0, valstep=1 )
         self.topSlide.on_changed(self.updateTop)
+        # set bars for the tray align
+        print("fixxxxxxxxx thisssssssssssssssssssssssssssssssssssssss")
+        #self.frames[7].MoveGridY.to = self.imgTop.shape[1]//2
+        #self.frames[7].MoveGridX.to = self.imgTop.shape[0]//2
+        #self.frames[7].MoveGridY.set(self.imgTop.shape[1]//2)
+        #self.frames[7].MoveGridX.set(self.imgTop.shape[0]//2)
         
     def updateFront(self, val):
         self.slides[0] = int(val)
