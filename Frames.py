@@ -192,9 +192,9 @@ class TrayAlign(tk.Frame):
         CreateToolTip(button1,"Move to the export menu")
    
         # button to show frame 3 with text 
-        button2 = Button(self, text ="Load CSV",command = lambda : controller.loadCSV) 
+        button2 = Button(self, text ="Load CSV",command = lambda : controller.loadCSV()) 
         button2.grid(row = 1, column = 0, padx = 10, pady = 10)   
-        CreateToolTip(button2,"Automatically try to find the center of trays in the scan")
+        CreateToolTip(button2,"Load a csv file for each tray in the scan")
         
         button3 = Button(self, text ="Back",command = lambda : controller.show_frame(TrayStack)) 
         button3.grid(row = 2, column = 0, padx = 10, pady = 10)   
@@ -216,8 +216,8 @@ class TrayAlign(tk.Frame):
         self.MoveGridX.grid(row=6,column=0,sticky = W) 
         self.MoveGridX.set(controller.gridSize[1])
         
-        self.MoveGridY = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Move Tray X", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.AdjustGridCentreY) 
-        self.MoveGridY.grid(row=6,column=0,sticky = W) 
+        self.MoveGridY = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Move Tray Y", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.AdjustGridCentreY) 
+        self.MoveGridY.grid(row=7,column=0,sticky = W) 
         self.MoveGridY.set(controller.gridSize[1])
 
 class Export(tk.Frame):  
