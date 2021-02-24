@@ -30,7 +30,7 @@ class MiTiSegmenter(tk.Tk):
         tk.report_callback_exception = self.showError
         self.thresholdMax = 255  
         self.thresholdMin = 0
-        self.blobMinSizeVal = 50
+        self.blobMinSizeVal = 10
         self.downsampleFactor = 1
         self.cellBase = 1
         self.usedThres =(0,0)
@@ -63,7 +63,7 @@ class MiTiSegmenter(tk.Tk):
             self.frames[F] = frame  
             frame.grid(row = 0, column = 0, sticky ="nsew") 
         self.show_frame(StartPage) 
-        
+    
     def show_frame(self, cont): 
         frame = self.frames[cont] 
         frame.tkraise() 
@@ -293,12 +293,12 @@ class MiTiSegmenter(tk.Tk):
     def ExportUnProcessedStack(self, processed = False):
         print("check this function is now correct")
         savepath = os.path.join(self.workingPath,"ExportImages")
-        img_size = self.imageStack.shape[1]*self.imageStack.shape[2]
+        #img_size = (self.imageStack.shape[1]*self.downsampleFactor)*(self.imageStack.shape[2]*self.downsampleFactor)
         image = open(self.RawPath)
         maxV = np.iinfo(self.bitType).max
         for i in range(self.imageStack.shape[0]): 
-            img = np.fromfile(image, dtype = self.bitType, count = img_size)
-            img.shape = (self.imageStack.shape[1],self.imageStack.shape[2])
+            img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
+            img.shape = (self.img_sizeXY)
             #img = img * (np.iinfo(self.bitType).max/img.max())
             img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
             #infoFile.write(os.path.join(savepath,str(i).zfill(6)+".tiff") + " " + str(self.pixelSizeZ*i) +"\n") 
@@ -344,27 +344,37 @@ class MiTiSegmenter(tk.Tk):
             infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
             p = i
             for o in range(bounds[i][0],bounds[i][1]+1):
-                 print("check this +1 doenst break anything")
+                 #print("check this +1 doenst break anything")
                  infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
                  print("create a flag for raw image loads that cycles through the file again")
                  img = None
-                 print(self.RawPath)
+                 #print(self.RawPath)
                  if self.RawPath:
                      print(self.imagePaths[o])
                      img = cv.imread(self.imagePaths[o],0).astype("uint8")
-                     print(img)
-                     print(img.shape)
+                     #print(img)
+                     #print(img.shape)
                      img  = img[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
-                     print(bounds[p][2],bounds[p][3], bounds[p][4],bounds[p][5])
+                     #print(bounds[p][2],bounds[p][3], bounds[p][4],bounds[p][5])
+                     #print(img)
                  else:
+                     print(self.workingPath + '/' + self.imagePaths[o])
                      img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+                 #print(img)
+                 #print(imType)
                  if imType == 1: #processed 
                      img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.processSingleTray(img) 
                  elif imType == 2: # segmentation 
                      img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#img * (self.processSingleTray(img)//255)
                      img[img >= 1] = 255
                  print(img)
-                 cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
+                 
+                 if(self.RawPath):
+                     print("in raw the images have different path")
+                     cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]), img)
+                 else:
+                     print(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o])
+                     cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
             infoFile.close()
     
     def exportTiffStacks(self):
@@ -390,7 +400,10 @@ class MiTiSegmenter(tk.Tk):
          gridNames = []
          TrayToBlob = []
          for i in range(shape[0]): 
+             print("\r loading img : "+str(i) + " of " + str(shape[0]),end=" ")
              img = cv.imread(self.imagePaths[i],0)
+             if self.downsampleFactor > 1:
+                img = cv.resize(img,(shape[2]//self.downsampleFactor,shape[1]//self.downsampleFactor))
              tempim = cv.cvtColor(img,cv.COLOR_GRAY2RGB)
              tempim = cv.putText(tempim,("processing image " + str(i+1) + ' / ' + str(shape[0]) + " this may take a while"),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
              cv.imshow("loading",tempim) 
@@ -410,21 +423,28 @@ class MiTiSegmenter(tk.Tk):
                  if stack is None:
                      continue
                  else: 
+                     print("set the stack to 1 ")
                      stack[stack != 0] = 1 
-                     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal*self.blobMinSizeVal*self.blobMinSizeVal)).astype("uint8")
+                     print("remove small objects ")
+                     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                     print(" get the labels ")
                      stack = measure.label(stack)
+                     print("get unique value ")
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
                          print("\r Getting blobs  : "+str(o) + " of " + str(unique.shape[0]),end=" ")
                          if unique[o] == 0: # background 
                              continue
                          currentBlob = np.where(stack == unique[o])
+                         print("current blob")
+                         
                          Z = currentBlob[0].reshape((currentBlob[0].shape[0],1))+start # was i
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
                          # padd the bound by the down sample rate
                          if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                             print(bounds)
                              blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
                      start = 0
@@ -688,11 +708,12 @@ class MiTiSegmenter(tk.Tk):
             self.bitType = np.uint64
         image = open(path)
         self.imageStack = np.zeros((resolution[2],resolution[1]//self.downsampleFactor,resolution[0]//self.downsampleFactor), dtype = "uint8")
-        img_size = resolution[0] * resolution[1]
+        self.img_size = resolution[0] * resolution[1]
+        self.img_sizeXY = (resolution[1],resolution[0])
         img_res = (resolution[0]//self.downsampleFactor,resolution[1]//self.downsampleFactor)
         maxV = np.iinfo(self.bitType).max
         for i in range(resolution[2]):
-            img = np.fromfile(image, dtype = self.bitType, count = img_size)
+            img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
             img.shape = (resolution[1],resolution[0])
             #img = img * (np.iinfo(self.bitType).max/img.max())
             
