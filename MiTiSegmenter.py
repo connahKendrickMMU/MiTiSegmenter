@@ -30,7 +30,7 @@ class MiTiSegmenter(tk.Tk):
         tk.report_callback_exception = self.showError
         self.thresholdMax = 255  
         self.thresholdMin = 0
-        self.blobMinSizeVal = 10
+        self.blobMinSizeVal = 15
         self.downsampleFactor = 1
         self.cellBase = 1
         self.usedThres =(0,0)
@@ -161,7 +161,9 @@ class MiTiSegmenter(tk.Tk):
                 else: 
                     trayCount = trayCount+1 
             else: 
-                if onTray == True: 
+                print(i)
+                print(self.imageStack.shape[0]-1)
+                if onTray == True or i == self.imageStack.shape[0]-1: 
                     onTray = False 
                     self.layers.append(trayStart + (trayCount//2))
                     trayStart = 0
@@ -422,6 +424,34 @@ class MiTiSegmenter(tk.Tk):
                          stack = np.stack((img,stack))
                      else: 
                          stack = np.concatenate((stack, img.reshape((1,img.shape[0],img.shape[1]))))
+                         
+                         if i == shape[0]-1:
+                             print("set the stack to 1 ")
+                             stack[stack != 0] = 1 
+                             print("remove small objects ")
+                             stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                             print(" get the labels ")
+                             stack = measure.label(stack)
+                             print("get unique value ")
+                             unique = np.unique(stack)
+                             for o in range(unique.shape[0]):  
+                                 print("\r Getting blobs  : "+str(o) + " of " + str(unique.shape[0]),end=" ")
+                                 if unique[o] == 0: # background
+                                     continue
+                                 currentBlob = np.where(stack == unique[o])
+                                 
+                                 Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
+                                 Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
+                                 X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
+                                 # padd the bound by the down sample rate
+                                 if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                                     bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                                     #print(bounds)
+                                     print("i think start - npmin")
+                                     print("i = " + str(start) + " z start = " +str(np.amin(currentBlob[0])+start) + " z end = " + str(np.amax(currentBlob[0])+start))
+                                     blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                             stack = None
+                             start = 0
              else:
                  if stack is None:
                      continue
@@ -861,11 +891,10 @@ class MiTiSegmenter(tk.Tk):
         self.topSlide = Slider(axes3, 'Top Slices', 0, self.imageStack.shape[0]-1, valinit=0, valstep=1 )
         self.topSlide.on_changed(self.updateTop)
         # set bars for the tray align
-        print("fixxxxxxxxx thisssssssssssssssssssssssssssssssssssssss")
-        #self.frames[7].MoveGridY.to = self.imgTop.shape[1]//2
-        #self.frames[7].MoveGridX.to = self.imgTop.shape[0]//2
-        #self.frames[7].MoveGridY.set(self.imgTop.shape[1]//2)
-        #self.frames[7].MoveGridX.set(self.imgTop.shape[0]//2)
+        self.frames[TrayAlign].MoveGridY.to = self.imgTop.shape[1]
+        self.frames[TrayAlign].MoveGridX.to = self.imgTop.shape[2]
+        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[1]//2)
+        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[2]//2)
         
     def updateFront(self, val):
         self.slides[0] = int(val)
