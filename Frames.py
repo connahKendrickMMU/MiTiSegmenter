@@ -62,15 +62,33 @@ class SeperateTrays(tk.Frame):
         label = Label(self, text ="Seperate trays", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
+        listboxValues = Listbox(self) 
+        listboxValues.grid(row=1, column = 0, rowspan=2, sticky = W) 
+        
         # button to show frame 2 with text 
-        button1 = Button(self, text ="Separate Trays", command = lambda : controller.show_frame(StartPage)) 
-        button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
+        button1 = Button(self, text ="Separate Trays", command = lambda : controller.exportTrays(listboxValues)) 
+        button1.grid(row = 1, column = 3, padx = 10, pady = 10) 
         CreateToolTip(button1,"Seperate the trays")
+        
+        # button to add a tray
+        addTray = Button(self, text ="Add Tray", command = lambda : controller.addTray(listboxValues)) 
+        addTray.grid(row = 2, column = 3, padx = 10, pady = 10) 
+        CreateToolTip(addTray,"Use the top slider to select the point you want one try to end\n and the next begin. You can add as many points as you like")
+        
+        removeTray = Button(self, text ="Remove Tray", command = lambda : self.deleteTray(listboxValues, controller)) 
+        removeTray.grid(row = 2, column = 4, padx = 10, pady = 10) 
+        CreateToolTip(removeTray,"Choose a try in the list and press this to remove it.")
+        
         # button to show frame 3 with text 
         button2 = Button(self, text ="Back", command = lambda : controller.show_frame(StackOptions)) 
-        button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
+        button2.grid(row = 3, column = 3, padx = 10, pady = 10) 
         CreateToolTip(button2,"Returns to the stack options menu")
         
+    def deleteTray(self,listboxValues, controller): 
+        if listboxValues.size() > 0:
+            controller.layers.pop(listboxValues.curselection()[0])
+            listboxValues.delete(listboxValues.curselection()[0])
+            controller.refreshImages
 
 class ThresAndCellStack(tk.Frame):  
     def __init__(self, parent, controller): 
@@ -172,13 +190,11 @@ class TrayStack(tk.Frame):
         addTray.grid(row = 1, column = 2, padx = 10, pady = 10)   
         CreateToolTip(addTray,"Use the top slider and click the add tray button\n,to add this as a slice")
         
-        
-        
     def deleteTray(self,listboxValues, controller): 
         if listboxValues.size() > 0:
             controller.layers.pop(listboxValues.curselection()[0])
             listboxValues.delete(listboxValues.curselection()[0])
-            self.refreshImages
+            controller.refreshImages
         
 class TrayAlign(tk.Frame):  
     def __init__(self, parent, controller): 

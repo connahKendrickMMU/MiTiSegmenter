@@ -121,11 +121,11 @@ class MiTiSegmenter(tk.Tk):
             listboxValues.delete(listboxValues.curselection()[0])
             self.refreshImages
          
-    def addTray(self):
-        self.listbox.insert(END,"tray part: " + "_" +str(self.topBar.get()))
+    def addTray(self, listbox):
+        listbox.insert(END,"tray part: " + "_" +str(self.slides[2]))
         
-    def exportTrays(self): 
-        items = self.listbox.get(0, END)
+    def exportTrays(self, listbox): 
+        items = listbox.get(0, END)
         numOfOutputs = len(items)
         # create the folders 
         lastOn = 0
@@ -401,9 +401,12 @@ class MiTiSegmenter(tk.Tk):
          TrayToBlob = []
          for i in range(shape[0]): 
              print("\r loading img : "+str(i) + " of " + str(shape[0]),end=" ")
-             img = cv.imread(self.imagePaths[i],0)
-             if self.downsampleFactor > 1:
-                img = cv.resize(img,(shape[2]//self.downsampleFactor,shape[1]//self.downsampleFactor))
+             if self.RawPath:
+                 img = cv.imread(self.imagePaths[i],0)
+             else:
+                 img = cv.imread(self.workingPath+'/'+self.imagePaths[i],0)
+             #if self.downsampleFactor > 1:
+                #img = cv.resize(img,(shape[2]//self.downsampleFactor,shape[1]//self.downsampleFactor))
              tempim = cv.cvtColor(img,cv.COLOR_GRAY2RGB)
              tempim = cv.putText(tempim,("processing image " + str(i+1) + ' / ' + str(shape[0]) + " this may take a while"),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
              cv.imshow("loading",tempim) 
@@ -433,18 +436,19 @@ class MiTiSegmenter(tk.Tk):
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
                          print("\r Getting blobs  : "+str(o) + " of " + str(unique.shape[0]),end=" ")
-                         if unique[o] == 0: # background 
+                         if unique[o] == 0: # background
                              continue
                          currentBlob = np.where(stack == unique[o])
-                         print("current blob")
                          
-                         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1))+start # was i
-                         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))*self.downsampleFactor
-                         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))*self.downsampleFactor
+                         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
+                         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
+                         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
                          if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                             print(bounds)
+                             #print(bounds)
+                             print("i think start - npmin")
+                             print("i = " + str(start) + " z start = " +str(np.amin(currentBlob[0])+start) + " z end = " + str(np.amax(currentBlob[0])+start))
                              blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
                      start = 0
@@ -512,7 +516,7 @@ class MiTiSegmenter(tk.Tk):
                           # folder containing the tiff stacks
                           stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
                           self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o])
-         if RawPath:
+         if self.RawPath:
                   self.DeleteTempStack()
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell, final = False):
