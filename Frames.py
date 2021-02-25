@@ -212,6 +212,14 @@ class TrayAlign(tk.Frame):
         button2.grid(row = 1, column = 0, padx = 10, pady = 10)   
         CreateToolTip(button2,"Load a csv file for each tray in the scan")
         
+        flipCSVH = Button(self, text ="Flip Tray Hor",command = lambda : controller.flipTrayHor()) 
+        flipCSVH.grid(row = 1, column = 1, padx = 10, pady = 10)   
+        CreateToolTip(flipCSVH,"Flip the CSV horizontally, so the top left is now the top right")
+        
+        flipCSVV = Button(self, text ="Flip Tray Ver",command = lambda : controller.flipTrayVer()) 
+        flipCSVV.grid(row = 1, column = 2, padx = 10, pady = 10)   
+        CreateToolTip(flipCSVH,"Flip the CSV Verticallly, so the top left is now the botton left")
+        
         button3 = Button(self, text ="Back",command = lambda : controller.show_frame(TrayStack)) 
         button3.grid(row = 2, column = 0, padx = 10, pady = 10)   
         CreateToolTip(button3,"Return to the Tray stack menu")
