@@ -223,13 +223,14 @@ class MiTiSegmenter(tk.Tk):
         
     def adjustGridSizeHor(self, val): 
         for i in range(len(self.layers)):     
-            if self.layers[i] < self.topBar.get() + self.traySize and self.layers[i] > self.topBar.get() - self.traySize: 
+            # was self.topbar
+            if self.layers[i] < self.slides[2] + self.traySize and self.layers[i] > self.slides[2] - self.traySize: 
                 self.gridSize[i] = (int(val),self.gridSize[i][1])
         self.refreshImages()
     
     def adjustGridSizeVert(self, val): 
         for i in range(len(self.layers)):     
-            if self.layers[i] < self.topBar.get() + self.traySize and self.layers[i] > self.topBar.get() - self.traySize:
+            if self.layers[i] < self.slides[2] + self.traySize and self.layers[i] > self.slides[2] - self.traySize:
                 self.gridSize[i] = (self.gridSize[i][0],int(val)) 
         self.refreshImages()
     
@@ -264,10 +265,12 @@ class MiTiSegmenter(tk.Tk):
             self.imageStack[self.imageStack == unique[i]] == numOn 
             numOn = numOn + 1'''
     
-    def generate3DModel(self,img,path):
+    def generate3DModel(self,img,path,folders):
         if img is None: 
             return 
         try:
+            if folders == "Pro" or folders == "Seg":
+                img = morphology.remove_small_objects(img.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
@@ -478,6 +481,9 @@ class MiTiSegmenter(tk.Tk):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
                              #print(bounds)
                              print("i think start - npmin")
+                             print(type(start))
+                             print(type(np.amin(currentBlob[0])))
+                             print(np.amin(currentBlob[0])[0])
                              print("i = " + str(start) + " z start = " +str(np.amin(currentBlob[0])+start) + " z end = " + str(np.amax(currentBlob[0])+start))
                              blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
@@ -545,7 +551,7 @@ class MiTiSegmenter(tk.Tk):
                       for o in range(len(folders)):  
                           # folder containing the tiff stacks
                           stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
-                          self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o])
+                          self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o],folders[0])
          if self.RawPath:
                   self.DeleteTempStack()
          
