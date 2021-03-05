@@ -1,3 +1,9 @@
+import matplotlib
+#matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+#plt.switch_backend("TkAgg")
+from matplotlib.widgets import Slider
+import tkinter as tk
 import traceback 
 import tkinter.messagebox
 import tkinter as tk
@@ -8,8 +14,6 @@ from skimage import measure, morphology
 import math
 import numpy as np  
 import cv2 as cv
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
 import os
 import open3d as o3d 
 import shutil
@@ -18,6 +22,9 @@ import shutil
 # our file
 from PopUpClasses import *
 from Frames import *
+
+print(matplotlib.get_backend())
+
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
 ####### Build exe ####### 
@@ -184,7 +191,7 @@ class MiTiSegmenter(tk.Tk):
             tempim = cv.putText(temp,("Checking for objects image " + str(i+1) + ' / ' + str(self.imageStack.shape[0])) + ' ' +str(onTray),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(255,255,55),2) 
             cv.imshow("Applying stack please wait, we use these images to check for breaks between the removed trays, e.g. all black = no tray .",tempim) 
             cv.waitKey(1)
-        cv.destroyAllWindows()
+        cv.destroyWindow("Applying stack please wait, we use these images to check for breaks between the removed trays, e.g. all black = no tray .")
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
@@ -281,7 +288,10 @@ class MiTiSegmenter(tk.Tk):
 
     def ExportUnProcessedStack(self, processed = False):
         savepath = os.path.join(self.workingPath,"ExportImages")
-        image = open(self.RawPath)
+        if self.RawPath:
+            image = open(self.RawPath)
+        else:
+            showinfo("What!","You are already using an image stack!")
         maxV = np.iinfo(self.bitType).max
         for i in range(self.imageStack.shape[0]): 
             img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
@@ -702,7 +712,7 @@ class MiTiSegmenter(tk.Tk):
             cv.imshow("loading",tempim) 
             cv.waitKey(1)
         image.close()
-        cv.destroyAllWindows()
+        cv.destroyWindow("loading")
         self.imagePaths = []
         self.imagesHeightSlice = []
         self.resPopUp = InfoWindow(self.master) 
@@ -790,7 +800,7 @@ class MiTiSegmenter(tk.Tk):
             tempim = cv.putText(tempim,("loading image " + str(i+1) + ' / ' + str(len(self.imagePaths))),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
             cv.imshow("loading",tempim) 
             cv.waitKey(1)
-        cv.destroyAllWindows()
+        cv.destroyWindow("loading")
         self.setInitGraphs()
         return True
             
@@ -802,8 +812,19 @@ class MiTiSegmenter(tk.Tk):
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         self.imgSide = self.imageStack[:,0,:]
         self.imgFront = self.imageStack[:,:,0] 
-
-        color = 'lightgoldenrodyellow'
+        cv.namedWindow("Front",cv.WINDOW_KEEPRATIO)
+        #cv.imshow("Front",np.zeros((300,300,3)))
+        cv.resizeWindow("Front", 300,300);
+        cv.createTrackbar("image", "Front" , 0, self.imageStack.shape[2]-1, self.updateFront) 
+        cv.namedWindow("Side",cv.WINDOW_KEEPRATIO)
+        cv.resizeWindow("Side", 300,300);
+        cv.createTrackbar("image", "Side" , 0, self.imageStack.shape[1]-1, self.updateSide) 
+        cv.namedWindow("Top",cv.WINDOW_KEEPRATIO)
+        cv.resizeWindow("Top", 300,300);
+        cv.createTrackbar("image", "Top" , 0, self.imageStack.shape[0]-1, self.updateTop) 
+        
+        cv.waitKey(1)
+        '''color = 'lightgoldenrodyellow'
         self.figFront, self.axFront = plt.subplots()
         self.figFront.canvas.set_window_title('Front slice')
         plt.subplots_adjust(bottom=0.25)
@@ -829,7 +850,7 @@ class MiTiSegmenter(tk.Tk):
         self.axTop.margins(x=0)
         axes3 = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=color)
         self.topSlide = Slider(axes3, 'Top Slices', 0, self.imageStack.shape[0]-1, valinit=0, valstep=1 )
-        self.topSlide.on_changed(self.updateTop)
+        self.topSlide.on_changed(self.updateTop)'''
         # set bars for the tray align
         self.frames[TrayAlign].MoveGridY.to = self.imgTop.shape[1]
         self.frames[TrayAlign].MoveGridX.to = self.imgTop.shape[2]
@@ -843,15 +864,19 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        self.lFront.set_data(temp)
-        self.figFront.canvas.draw_idle()
+        #self.lFront.set_data(temp)
+        #self.figFront.canvas.draw_idle()
+        cv.imshow("Front",temp)
+        cv.waitKey(1)
         
     def updateSide(self, val):
         self.slides[1] = int(val)
         temp = self.imageStack[:,int(val)-1,:]
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        self.lSide.set_data(temp)
-        self.figSide.canvas.draw_idle()
+        #self.lSide.set_data(temp)
+        #self.figSide.canvas.draw_idle()
+        cv.imshow("Side",temp)
+        cv.waitKey(1)
         
     def updateTop(self, val):
         self.slides[2] = int(val)
@@ -859,8 +884,10 @@ class MiTiSegmenter(tk.Tk):
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,int(val))
-        self.lTop.set_data(temp)
-        self.figTop.canvas.draw_idle()
+        #self.lTop.set_data(temp)
+        #self.figTop.canvas.draw_idle()
+        cv.imshow("Top",temp)
+        cv.waitKey(1)
         
     def updateCellHelp(self, val):
         ampCellHelp = val
