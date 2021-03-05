@@ -117,13 +117,13 @@ class ThresAndCellStack(tk.Frame):
         NxtButton.grid(row = 1, column = 2, padx = 10, pady = 10) 
         CreateToolTip(NxtButton,"Go to the label options menu")
         
-        CellHelpButton = Button(self, text ="Help", command = lambda : controller.ShowCellHelp()) 
-        CellHelpButton.grid(row = 2, column = 1, padx = 10, pady = 10) 
-        CreateToolTip(CellHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by the cell shade")
+        #CellHelpButton = Button(self, text ="Help", command = lambda : controller.ShowCellHelp()) 
+        #CellHelpButton.grid(row = 2, column = 1, padx = 10, pady = 10) 
+        #CreateToolTip(CellHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by the cell shade")
         
-        ThresHelpButton = Button(self, text ="Help", command = lambda : controller.ShowThresHelp()) 
-        ThresHelpButton.grid(row = 3, column = 1, padx = 10, pady = 10) 
-        CreateToolTip(ThresHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by thresholding")
+        #ThresHelpButton = Button(self, text ="Help", command = lambda : controller.ShowThresHelp()) 
+        #ThresHelpButton.grid(row = 3, column = 1, padx = 10, pady = 10) 
+        #CreateToolTip(ThresHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by thresholding")
     
     '''def adjustThresholdMax(self,val):
         if int(val) <= self.thresholdMin: 

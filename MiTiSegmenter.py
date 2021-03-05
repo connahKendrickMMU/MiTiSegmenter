@@ -1,8 +1,3 @@
-import matplotlib
-#matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-#plt.switch_backend("TkAgg")
-from matplotlib.widgets import Slider
 import tkinter as tk
 import traceback 
 import tkinter.messagebox
@@ -157,7 +152,7 @@ class MiTiSegmenter(tk.Tk):
                 for o in range(lastOn, numberOfFrames): 
                     shutil.copyfile(self.workingPath+'/' + self.imagePaths[o],self.workingPath+'/tray' + str(i)+ '/' +self.imagePaths[o]) 
                     
-                    cv.imshow("loading",self.imgStack[o,:,:]) 
+                    cv.imshow("loading",self.imageStack[o,:,:]) 
                     cv.waitKey(1)
                     infoFile.write('"' + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[startLast]) +"\n")
                     lastOn = o
@@ -372,9 +367,9 @@ class MiTiSegmenter(tk.Tk):
          shape = self.imageStack.shape
          self.imageStack = None 
          stack = None 
-         self.figTop.close()
-         self.figSide.close()
-         self.figFront.close()
+         #self.figTop.close()
+         #self.figSide.close()
+         #self.figFront.close()
          bounds = [] 
          blobCenters = [] 
          gridCenters = [] 
@@ -854,10 +849,10 @@ class MiTiSegmenter(tk.Tk):
         self.topSlide = Slider(axes3, 'Top Slices', 0, self.imageStack.shape[0]-1, valinit=0, valstep=1 )
         self.topSlide.on_changed(self.updateTop)'''
         # set bars for the tray align
-        self.frames[TrayAlign].MoveGridY.to = self.imgTop.shape[1]
-        self.frames[TrayAlign].MoveGridX.to = self.imgTop.shape[2]
-        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[1]//2)
-        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[2]//2)
+        self.frames[TrayAlign].MoveGridY.to = self.imgTop.shape[0]
+        self.frames[TrayAlign].MoveGridX.to = self.imgTop.shape[1]
+        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[0]//2)
+        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[1]//2)
         
     def updateFront(self, val):
         self.slides[0] = int(val)
@@ -891,7 +886,7 @@ class MiTiSegmenter(tk.Tk):
         cv.imshow("Top",temp)
         cv.waitKey(1)
         
-    def updateCellHelp(self, val):
+    '''def updateCellHelp(self, val):
         ampCellHelp = val
         self.lCellHelp.set_ydata(self.sCellHelp-(self.sCellHelp%ampCellHelp))
         self.figCellHelp.canvas.draw_idle()
@@ -932,7 +927,7 @@ class MiTiSegmenter(tk.Tk):
         
         sampThresHelp.on_changed(self.updateThresHelp)
         plt.title('Thresholes remove all values out side of a range')
-        plt.show()
+        plt.show()'''
 
 app = MiTiSegmenter() 
 app.title("MiTiSegmenter")
