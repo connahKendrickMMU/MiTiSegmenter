@@ -23,7 +23,6 @@ import shutil
 from PopUpClasses import *
 from Frames import *
 
-print(matplotlib.get_backend())
 
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
@@ -814,13 +813,16 @@ class MiTiSegmenter(tk.Tk):
         self.imgFront = self.imageStack[:,:,0] 
         cv.namedWindow("Front",cv.WINDOW_KEEPRATIO)
         #cv.imshow("Front",np.zeros((300,300,3)))
-        cv.resizeWindow("Front", 300,300);
+        r = 300/self.imgFront.shape[1]
+        cv.resizeWindow("Front", 300,int(self.imgFront.shape[0]*r));
         cv.createTrackbar("image", "Front" , 0, self.imageStack.shape[2]-1, self.updateFront) 
         cv.namedWindow("Side",cv.WINDOW_KEEPRATIO)
-        cv.resizeWindow("Side", 300,300);
+        r = 300/self.imgSide.shape[1]
+        cv.resizeWindow("Side", 300,int(self.imgSide.shape[0]*r));
         cv.createTrackbar("image", "Side" , 0, self.imageStack.shape[1]-1, self.updateSide) 
         cv.namedWindow("Top",cv.WINDOW_KEEPRATIO)
-        cv.resizeWindow("Top", 300,300);
+        r = 300/self.imgTop.shape[1]
+        cv.resizeWindow("Top", 300,int(self.imgTop.shape[0]*r));
         cv.createTrackbar("image", "Top" , 0, self.imageStack.shape[0]-1, self.updateTop) 
         
         cv.waitKey(1)
