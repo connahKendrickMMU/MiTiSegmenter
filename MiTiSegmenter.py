@@ -38,8 +38,8 @@ class MiTiSegmenter(tk.Tk):
         self.gridSize = (0,0)
         self.gridCenter = (0,0)
         self.gridRotation = 0
-        self.viewThresholdVar = 1#IntVar() 
-        self.viewCellVar = 1 #IntVar()
+        self.viewThresholdVar = 1
+        self.viewCellVar = 1 
         self.layers = []
         self.traySize = 50
         self.trayCSV = [] 
@@ -111,12 +111,6 @@ class MiTiSegmenter(tk.Tk):
             # setup base layers
             self.putGridOnImage(np.zeros((self.imageStack.shape[1],self.imageStack.shape[2])), self.layers[i])
         self.refreshImages()
-    
-    '''def deleteTray(self,listboxValues): 
-        if listboxValues.size() > 0:
-            self.layers.pop(listboxValues.curselection()[0])
-            listboxValues.delete(listboxValues.curselection()[0])
-            self.refreshImages'''
          
     def addTray(self, listbox):
         listbox.insert(END,"tray part: " + "_" +str(self.slides[2]))
@@ -137,7 +131,6 @@ class MiTiSegmenter(tk.Tk):
             infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n") 
             startLast = lastOn
             if self.RawPath:
-                #image = open(self.RawPath)
                 maxV = np.iinfo(self.bitType).max
                 for o in range(lastOn, numberOfFrames): 
                     img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
@@ -177,7 +170,7 @@ class MiTiSegmenter(tk.Tk):
                 else: 
                     trayCount = trayCount+1 
             else: 
-                if onTray == True or i == self.imageStack.shape[0]-1: 
+                if onTray == True and i == self.imageStack.shape[0]-1: 
                     onTray = False 
                     self.layers.append(trayStart + (trayCount//2))
                     trayStart = 0
@@ -193,15 +186,6 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             listboxValues.insert(END,"tray : "+ str(i+1) + "_" +str(self.layers[i]))
         self.refreshImages()
-    
-    '''def removeblobDensity(self): 
-        for i in range(self.imageStack.shape[0]): 
-            print("\rprocessing image : " + str(i) + " of " + str(self.imageStack.shape[0]),end=" ")
-            img = self.imageStack[i].astype('uint8')
-            img = cv.Canny(img,self.threshold,255) 
-            img[img != 0] == 1 
-            self.imageStack[i] = self.imageStack[i] * img
-        self.refreshImages()'''
     
     def AdjustGridCentreY(self, val): 
         self.gridCenter = (self.gridCenter[0],int(val)) 
@@ -254,6 +238,7 @@ class MiTiSegmenter(tk.Tk):
         if img is None: 
             return 
         try:
+            print(folders)
             if folders == "Pro" or folders == "Seg":
                 img = morphology.remove_small_objects(img.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
@@ -367,9 +352,6 @@ class MiTiSegmenter(tk.Tk):
          shape = self.imageStack.shape
          self.imageStack = None 
          stack = None 
-         #self.figTop.close()
-         #self.figSide.close()
-         #self.figFront.close()
          bounds = [] 
          blobCenters = [] 
          gridCenters = [] 
@@ -404,7 +386,6 @@ class MiTiSegmenter(tk.Tk):
                                  if unique[o] == 0: # background
                                      continue
                                  currentBlob = np.where(stack == unique[o])
-                                 
                                  Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
                                  Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                                  X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
@@ -512,21 +493,6 @@ class MiTiSegmenter(tk.Tk):
             img[img > 0] == 255
         return img.astype("uint8")
     
-    ''' def frontSlider(self,val): 
-        # right image
-        temp = self.imageStack[:,:,int(val)-1]
-        temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB) 
-
-        for i in range(len(self.layers)):
-            temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
-        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        cv.imshow("front", temp)
-    
-    def sideSlider(self,val): 
-        temp = self.imageStack[:,int(val)-1,:]
-        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        cv.imshow("side", temp)'''
-    
     def rotate(self, origin, point, angle):
         angle = math.radians(angle)
         ox, oy = origin
@@ -555,7 +521,6 @@ class MiTiSegmenter(tk.Tk):
                     temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
                     temp = cv.putText(temp,self.trayCSV[i][0][self.trayCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
                     temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][self.trayCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-    
                     rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
                     rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
                     for o in range(self.trayCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
@@ -576,13 +541,6 @@ class MiTiSegmenter(tk.Tk):
                             # draw circle at cols 
                             temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
         return temp
-    
-    '''def topSlider(self,val): 
-        temp = self.imageStack[int(val)-1,:,:]
-        temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
-        temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        temp = self.putGridOnImage(temp,val)
-        cv.imshow("top", temp)'''
 
     def generateInfoFile(self):  
         self.resPopUp = InfoWindow(self.master) 
@@ -678,7 +636,6 @@ class MiTiSegmenter(tk.Tk):
         resolution[2] = int(resolution[2])
         resolution[3] = int(resolution[3])
         height = resolution[2]
-        #print(resolution)
         self.bitType = np.uint8
         if(resolution[3] == 16):
             self.bitType = np.uint16
@@ -757,7 +714,6 @@ class MiTiSegmenter(tk.Tk):
         self.downsampleFactor = int(resolution)
         info = open(path+'/'+infoFile,'r')  
         info = info.readlines()
-        
         self.imagePaths = [] 
         self.imagesHeightSlice = []
         self.pixelSizeX = 0 
@@ -801,58 +757,30 @@ class MiTiSegmenter(tk.Tk):
     def setInitGraphs(self):
         self.imgTop = self.imageStack[0,:,:]
         self.gridSize = ( ((self.imgTop.shape[0]//10)*9)//2, ((self.imgTop.shape[1]//10)*3)//2)
-        
         self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         self.imgSide = self.imageStack[:,0,:]
         self.imgFront = self.imageStack[:,:,0] 
         cv.namedWindow("Front",cv.WINDOW_KEEPRATIO)
-        #cv.imshow("Front",np.zeros((300,300,3)))
         r = 300/self.imgFront.shape[1]
         cv.resizeWindow("Front", 300,int(self.imgFront.shape[0]*r));
-        cv.createTrackbar("image", "Front" , 0, self.imageStack.shape[2]-1, self.updateFront) 
+        cv.createTrackbar("image", "Front" , self.imageStack.shape[2]//2, self.imageStack.shape[2]-1, self.updateFront) 
+        self.updateFront(self.imageStack.shape[2]//2)
         cv.namedWindow("Side",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgSide.shape[1]
         cv.resizeWindow("Side", 300,int(self.imgSide.shape[0]*r));
-        cv.createTrackbar("image", "Side" , 0, self.imageStack.shape[1]-1, self.updateSide) 
+        cv.createTrackbar("image", "Side" , self.imageStack.shape[1]//2, self.imageStack.shape[1]-1, self.updateSide) 
+        self.updateSide(self.imageStack.shape[1]//2)
         cv.namedWindow("Top",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgTop.shape[1]
         cv.resizeWindow("Top", 300,int(self.imgTop.shape[0]*r));
-        cv.createTrackbar("image", "Top" , 0, self.imageStack.shape[0]-1, self.updateTop) 
-        
+        cv.createTrackbar("image", "Top" , self.imageStack.shape[0]//2, self.imageStack.shape[0]-1, self.updateTop) 
+        self.updateTop(self.imageStack.shape[0]//2)
         cv.waitKey(1)
-        '''color = 'lightgoldenrodyellow'
-        self.figFront, self.axFront = plt.subplots()
-        self.figFront.canvas.set_window_title('Front slice')
-        plt.subplots_adjust(bottom=0.25)
-        self.lFront = plt.imshow(self.imgFront)
-        self.axFront.margins(x=0)
-        axes = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=color)
-        self.frontSlide= Slider(axes, 'Front', 0, self.imageStack.shape[2]-1, valinit=0, valstep=1 )
-        self.frontSlide.on_changed(self.updateFront)
-        
-        self.figSide, self.axSide = plt.subplots()
-        self.figSide.canvas.set_window_title('Side slice')
-        plt.subplots_adjust(bottom=0.25)
-        self.lSide = plt.imshow(self.imgSide)
-        self.axSide.margins(x=0)
-        axes2 = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=color)
-        self.sideSlide = Slider(axes2, 'Side Slices', 0, self.imageStack.shape[1], valinit=0, valstep=1 )
-        self.sideSlide.on_changed(self.updateSide)
-        
-        self.figTop, self.axTop = plt.subplots()
-        self.figTop.canvas.set_window_title('Top slice')
-        plt.subplots_adjust(bottom=0.25)
-        self.lTop = plt.imshow(self.imgTop)
-        self.axTop.margins(x=0)
-        axes3 = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=color)
-        self.topSlide = Slider(axes3, 'Top Slices', 0, self.imageStack.shape[0]-1, valinit=0, valstep=1 )
-        self.topSlide.on_changed(self.updateTop)'''
-        # set bars for the tray align
-        self.frames[TrayAlign].MoveGridY.to = self.imgTop.shape[0]
-        self.frames[TrayAlign].MoveGridX.to = self.imgTop.shape[1]
-        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[0]//2)
-        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[1]//2)
+        self.frames[TrayAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
+        self.frames[TrayAlign].MoveGridX.configure(to = self.imgTop.shape[1]*2)
+        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[0])
+        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[1])
         
     def updateFront(self, val):
         self.slides[0] = int(val)
@@ -861,8 +789,6 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        #self.lFront.set_data(temp)
-        #self.figFront.canvas.draw_idle()
         cv.imshow("Front",temp)
         cv.waitKey(1)
         
@@ -870,8 +796,6 @@ class MiTiSegmenter(tk.Tk):
         self.slides[1] = int(val)
         temp = self.imageStack[:,int(val)-1,:]
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        #self.lSide.set_data(temp)
-        #self.figSide.canvas.draw_idle()
         cv.imshow("Side",temp)
         cv.waitKey(1)
         
@@ -881,53 +805,8 @@ class MiTiSegmenter(tk.Tk):
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,int(val))
-        #self.lTop.set_data(temp)
-        #self.figTop.canvas.draw_idle()
         cv.imshow("Top",temp)
         cv.waitKey(1)
-        
-    '''def updateCellHelp(self, val):
-        ampCellHelp = val
-        self.lCellHelp.set_ydata(self.sCellHelp-(self.sCellHelp%ampCellHelp))
-        self.figCellHelp.canvas.draw_idle()
-        
-    def ShowCellHelp(self):
-        self.figCellHelp, ax = plt.subplots()
-        self.figCellHelp.canvas.set_window_title('Cell-Shade example')
-        plt.subplots_adjust(bottom=0.4)
-        t = np.arange(1, 255, 1)
-        self.sCellHelp = t
-        self.lCellHelp, = plt.plot(t, self.sCellHelp, lw=2)
-        ax.margins(x=0,y=0)
-        axcolor = 'lightgoldenrodyellow'
-        axampCellHelp = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
-        sampCellHelp = Slider(axampCellHelp, 'Cell-base', 1, 255, valinit=0)
-        
-        sampCellHelp.on_changed(self.updateCellHelp)
-        plt.title('Cell-shading is a technique of grouping similar values. \n If you move the bar you\'ll see the bar becomes a staircase as values are grouped.\n This helps remove the human error with small values')
-        plt.show()
-        
-    def updateThresHelp(self, val):
-        ampThresHelp = val
-        ampThresHelp[self.sThresHelp <= ampThresHelp] = 0
-        self.lThresHelp.set_ydata(temp)
-        self.figThresHelp.canvas.draw_idle()
-        
-    def ShowThresHelp(self):
-        self.figThresHelp, ax = plt.subplots()
-        self.figThresHelp.canvas.set_window_title('Thres-Shade example')
-        plt.subplots_adjust(bottom=0.4)
-        t = np.arange(1, 255, 1)
-        self.sThresHelp = t
-        self.lThresHelp, = plt.plot(t, self.sThresHelp, lw=2)
-        ax.margins(x=0,y=0)
-        axcolor = 'lightgoldenrodyellow'
-        axampThresHelp = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
-        sampThresHelp = Slider(axampThresHelp, 'Thres-base', 1, 255, valinit=0)
-        
-        sampThresHelp.on_changed(self.updateThresHelp)
-        plt.title('Thresholes remove all values out side of a range')
-        plt.show()'''
 
 app = MiTiSegmenter() 
 app.title("MiTiSegmenter")

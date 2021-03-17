@@ -29,12 +29,6 @@ class StartPage(tk.Frame):
         button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button2, "Load a raw image, this will require you to input the scanner reolutions\n how big each pixel is X,Y,Z and the image size, such as 2000 images\n 512*512 in size")
         
-        ## button to show frame 2 with text layout2 
-        #button3 = Button(self, text ="Generate info file", 
-        #command = lambda : controller.show_frame(generateInfoFile)) 
-        #button3.grid(row = 3, column = 0, padx = 10, pady = 10)
-        #CreateToolTip(button3, "An info file is a file that lists on the images\n in a stack the dimensions X Y Z, as well as the distance between images")
-
 class StackOptions(tk.Frame): 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent) 
@@ -116,28 +110,6 @@ class ThresAndCellStack(tk.Frame):
         NxtButton = Button(self, text ="Next", command = lambda : controller.show_frame(LabelImages)) 
         NxtButton.grid(row = 1, column = 2, padx = 10, pady = 10) 
         CreateToolTip(NxtButton,"Go to the label options menu")
-        
-        #CellHelpButton = Button(self, text ="Help", command = lambda : controller.ShowCellHelp()) 
-        #CellHelpButton.grid(row = 2, column = 1, padx = 10, pady = 10) 
-        #CreateToolTip(CellHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by the cell shade")
-        
-        #ThresHelpButton = Button(self, text ="Help", command = lambda : controller.ShowThresHelp()) 
-        #ThresHelpButton.grid(row = 3, column = 1, padx = 10, pady = 10) 
-        #CreateToolTip(ThresHelpButton,"Shows a chart demonstrating how each voxel (3D pixel) is affected by thresholding")
-    
-    '''def adjustThresholdMax(self,val):
-        if int(val) <= self.thresholdMin: 
-            self.thresholdBar.set(self.thresholdMin+1) 
-        else:
-            self.thresholdMax = int(val)
-        self.refreshImages() 
-        
-    def adjustThresholdMin(self,val):
-        if int(val) >= self.thresholdMax:
-            self.thresholdBarMin.set(self.thresholdMax-1)
-        else:
-            self.thresholdMin = int(val)
-        self.refreshImages()'''
         
 class LabelImages(tk.Frame):  
     def __init__(self, parent, controller): 
@@ -228,21 +200,21 @@ class TrayAlign(tk.Frame):
         self.rotateBar.grid(row=3,column=0,sticky = NW) 
         self.rotateBar.set(controller.gridRotation)
         
-        self.ScaleGridBarH = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustGridSizeHor) 
+        self.ScaleGridBarH = Scale(self, from_=0, to=280, orient=HORIZONTAL, label="Scale Tray Horizontal", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustGridSizeHor) 
         self.ScaleGridBarH.grid(row=4,column=0,sticky = W) 
         self.ScaleGridBarH.set(controller.gridSize[0]) 
         
-        self.ScaleGridBarV = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustGridSizeVert) 
+        self.ScaleGridBarV = Scale(self, from_=0, to=280, orient=HORIZONTAL, label="Scale Tray Vertical", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustGridSizeVert) 
         self.ScaleGridBarV.grid(row=5,column=0,sticky = W) 
         self.ScaleGridBarV.set(controller.gridSize[1])
         
         self.MoveGridX = Scale(self, from_=0, to=250, orient=HORIZONTAL, label="Move Tray X", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.AdjustGridCentreX) 
         self.MoveGridX.grid(row=6,column=0,sticky = W) 
-        self.MoveGridX.set(0)#controller.imgTop.shape[0]//2
+        self.MoveGridX.set(0)
         
         self.MoveGridY = Scale(self, from_=0, to=250, orient=HORIZONTAL, label="Move Tray Y", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.AdjustGridCentreY) 
         self.MoveGridY.grid(row=7,column=0,sticky = W) 
-        self.MoveGridY.set(0)#controller.imgTop.shape[1]//2
+        self.MoveGridY.set(0)
 
 class Export(tk.Frame):  
     def __init__(self, parent, controller): 
