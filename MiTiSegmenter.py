@@ -469,7 +469,7 @@ class MiTiSegmenter(tk.Tk):
                      self.WriteStacks(i, blobName, bounds, 1)
                  if generateSeg == 1:   
                      self.WriteStacks(i, blobName, bounds, 2)
-                     
+
          if generateMod == 1:
                   blobs = os.listdir(self.workingPath + '/' + 'blobstacks') 
                   for i in range(len(blobs)): 
