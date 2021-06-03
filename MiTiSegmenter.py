@@ -138,7 +138,8 @@ class MiTiSegmenter(tk.Tk):
                     img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
                     cv.imshow("loading",img) 
                     cv.waitKey(1)
-                    cv.imwrite(self.workingPath+'/tray' + str(i)+'/'+str(o).zfill(6)+".tiff", img)
+                    cv.imwrite(self.workingPath+'/tray' + str(i)+'/'+str(o).zfill(6)+".tiff", img) 
+                    #showinfo("path = " + self.workingPath+'/tray' + str(i)+'/'+str(o).zfill(6)+".tiff")
                     infoFile.write('"' + str(i).zfill(6)+".tiff" +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[startLast]) +"\n")
                     lastOn = o
             else:
@@ -267,6 +268,8 @@ class MiTiSegmenter(tk.Tk):
 
     def ExportUnProcessedStack(self, processed = False):
         savepath = os.path.join(self.workingPath,"ExportImages")
+        if os.path.isdir(savepath) == False:
+            os.mkdir(savepath)
         if self.RawPath:
             image = open(self.RawPath)
         else:
@@ -276,7 +279,8 @@ class MiTiSegmenter(tk.Tk):
             img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
             img.shape = (self.img_sizeXY)
             img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
-            cv.imwrite(savepath+'/'+str(i).zfill(6)+".tiff", img)
+            cv.imwrite(savepath+'/'+str(i).zfill(6)+".tiff", img) 
+            #showinfo("box","path = " + savepath+'/'+str(i).zfill(6)+".tiff")
             self.imagePaths.append(savepath+'/'+str(i).zfill(6)+".tiff")
         image.close()
         if processed == True:
@@ -312,28 +316,31 @@ class MiTiSegmenter(tk.Tk):
             dirName = "Seg"
         if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) + '/' + dirName) == False:
             os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName) +'/'+dirName) 
-            infoFile = open(self.workingPath + '/' + 'blobstacks'+'/' + str(blobName) +'/'+ dirName +'/' + "a_info.info","w") 
-            infoFile.write("pixelsize " + str(self.pixelSizeX)  + " " + str(self.pixelSizeY) +"\n") 
-            infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
-            p = i
-            for o in range(bounds[i][0],bounds[i][1]+1):
-                 infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
-                 img = None
-                 if self.RawPath:
-                     img = cv.imread(self.imagePaths[o],0).astype("uint8")
-                     img  = img[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
-                 else:
-                     img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
-                 if imType == 1: #processed 
-                     img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-                 elif imType == 2: # segmentation 
-                     img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-                     img[img >= 1] = 255
-                 if(self.RawPath):
-                     cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]), img)
-                 else:
-                     cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
-            infoFile.close()
+        print("i moved this back 1 tab as it would only run if the dir didnt exist")
+        infoFile = open(self.workingPath + '/' + 'blobstacks'+'/' + str(blobName) +'/'+ dirName +'/' + "a_info.info","w") 
+        infoFile.write("pixelsize " + str(self.pixelSizeX)  + " " + str(self.pixelSizeY) +"\n") 
+        infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
+        p = i
+        for o in range(bounds[i][0],bounds[i][1]+1):
+             infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
+             img = None
+             if self.RawPath:
+                 img = cv.imread(self.imagePaths[o],0).astype("uint8")
+                 img  = img[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+             else:
+                 img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+             if imType == 1: #processed 
+                 img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+             elif imType == 2: # segmentation 
+                 img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+                 img[img >= 1] = 255
+             if(self.RawPath):
+                 cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]), img)
+             else:
+                 cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
+             #showinfo("box","Raw = " + self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]))
+             #showinfo("box","Stack = " +self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o])
+        infoFile.close()
     
     def exportTiffStacks(self):
          if self.imageStack is None: 
@@ -357,6 +364,7 @@ class MiTiSegmenter(tk.Tk):
          gridCenters = [] 
          gridNames = []
          TrayToBlob = []
+         start = 0
          for i in range(shape[0]):
              if self.RawPath:
                  img = cv.imread(self.imagePaths[i],0)
@@ -366,39 +374,41 @@ class MiTiSegmenter(tk.Tk):
              tempim = cv.putText(tempim,("processing image " + str(i+1) + ' / ' + str(shape[0]) + " this may take a while"),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
              cv.imshow("loading",tempim) 
              cv.waitKey(1)
-             start = 0
+             
              img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-             if img.max() > 0: 
+             if img.max() > 0 or i == shape[0]-1: 
                  if stack is None: 
                      start = i
+                     print("start is " +str(start))
                      stack = img
                  else:
                      if len(stack.shape) < 3:
                          stack = np.stack((img,stack))
                      else: 
                          stack = np.concatenate((stack, img.reshape((1,img.shape[0],img.shape[1]))))
-                         if i == shape[0]-1:
-                             stack[stack != 0] = 1 
-                             stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
-                             stack = measure.label(stack)
-                             unique = np.unique(stack)
-                             for o in range(unique.shape[0]):  
-                                 if unique[o] == 0: # background
-                                     continue
-                                 currentBlob = np.where(stack == unique[o])
-                                 Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
-                                 Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
-                                 X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
-                                 # padd the bound by the down sample rate
-                                 if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
-                                     bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                                     blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
-                             stack = None
-                             start = 0
+                         # if i == shape[0]-1:
+                         #     stack[stack != 0] = 1 
+                         #     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                         #     stack = measure.label(stack)
+                         #     unique = np.unique(stack)
+                         #     for o in range(unique.shape[0]):  
+                         #         if unique[o] == 0: # background
+                         #             continue
+                         #         currentBlob = np.where(stack == unique[o])
+                         #         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
+                         #         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
+                         #         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
+                         #         # padd the bound by the down sample rate
+                         #         if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                         #             bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                         #             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                         #     stack = None
+                         #     start = 0
              else:
                  if stack is None:
                      continue
                  else: 
+                     print("first end " +str(i))
                      stack[stack != 0] = 1 
                      stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
                      stack = measure.label(stack)
@@ -412,11 +422,11 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
+                         print("save blob "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
-                     start = 0
          if len(self.layers) > 0:
              self.flipTrayVer()
              for i in range(len(self.layers)): 
@@ -624,12 +634,14 @@ class MiTiSegmenter(tk.Tk):
         dsample = self.resPopUp.value 
         if len(dsample) < 1: 
             dsample = 1
+            print(dsample)
             return False
         self.downsampleFactor = int(dsample)
         self.resPopUp = RawInfoWindow(self.master) 
         self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 4: 
+            print("false res")
             return False
         resolution[0] = int(resolution[0])
         resolution[1] = int(resolution[1])

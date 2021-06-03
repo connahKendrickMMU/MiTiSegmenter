@@ -9,10 +9,16 @@ class InfoWindow(object):
         self.infoLabel=Label(top,text="Please enter file resolution with ; to separate values")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
+        self.infoEntry.insert(0,"0.045043;0.045043;0.045043")
         self.infoEntry.pack()
         self.infoButton=Button(top,text='Ok',command=self.cleanup)
         self.infoButton.pack()
-    def cleanup(self):
+        top.bind('<Return>', self.cleanup)
+        top.protocol("WM_DELETE_WINDOW", self.on_closing)
+    def on_closing(self):
+            self.value="1"
+            self.top.destroy()
+    def cleanup(self, event=None):
         self.value=self.infoEntry.get()
         self.top.destroy() 
         
@@ -22,10 +28,16 @@ class RawInfoWindow(object):
         self.infoLabel=Label(top,text="Please enter file resoltuion (width,height,layers and bit rate, scanner will provide details) \n with ; to separate values.")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
+        self.infoEntry.insert(0,"2965;2361;2119;16")
         self.infoEntry.pack()
         self.infoButton=Button(top,text='Ok',command=self.cleanup)
         self.infoButton.pack()
-    def cleanup(self):
+        top.bind('<Return>', self.cleanup)
+        top.protocol("WM_DELETE_WINDOW", self.on_closing)
+    def on_closing(self):
+            self.value="1"
+            self.top.destroy()
+    def cleanup(self, event=None):
         self.value=self.infoEntry.get()
         self.top.destroy() 
 
@@ -35,10 +47,16 @@ class DownsampleWindow(object):
         self.infoLabel=Label(top,text="Please enter the downsample rate or 1 for no downsampling")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
+        self.infoEntry.insert(0,"2")
         self.infoEntry.pack()
         self.infoButton=Button(top,text='Ok',command=self.cleanup)
         self.infoButton.pack()
-    def cleanup(self):
+        top.bind('<Return>', self.cleanup)
+        top.protocol("WM_DELETE_WINDOW", self.on_closing)
+    def on_closing(self):
+            self.value="1"
+            self.top.destroy()
+    def cleanup(self, event=None):
         self.value=self.infoEntry.get()
         self.top.destroy()
     
