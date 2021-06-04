@@ -22,7 +22,7 @@ from Frames import *
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
 ####### Build exe ####### 
-# need add path to dask.yaml and distribution.yaml in you python Lib/site-packages/(dask or distribution)
+# pyinstaller MiTiSegmenter.py --onefile
 
 class MiTiSegmenter(tk.Tk): 
     # initialisation 
@@ -379,7 +379,7 @@ class MiTiSegmenter(tk.Tk):
              if img.max() > 0 or i == shape[0]-1: 
                  if stack is None: 
                      start = i
-                     print("start is " +str(start))
+                     #print("start is " +str(start))
                      stack = img
                  else:
                      if len(stack.shape) < 3:
@@ -408,7 +408,7 @@ class MiTiSegmenter(tk.Tk):
                  if stack is None:
                      continue
                  else: 
-                     print("first end " +str(i))
+                     #print("first end " +str(i))
                      stack[stack != 0] = 1 
                      stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
                      stack = measure.label(stack)
@@ -422,7 +422,7 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
-                         print("save blob "+ str(start))
+                         #print("save blob "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
                              blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
@@ -514,7 +514,7 @@ class MiTiSegmenter(tk.Tk):
     def putGridOnImage(self,temp, val): 
         for i in range(len(self.layers)): 
             if self.layers[i] < int(val) + self.traySize and self.layers[i] > int(val) - self.traySize:
-                print("need redo scale bars")
+                #print("need redo scale bars")
                 self.frames[TrayAlign].ScaleGridBarH.set(self.gridSize[i][0]) 
                 self.frames[TrayAlign].ScaleGridBarV.set(self.gridSize[i][1]) 
                 halfTemp = (self.gridCenter[0],self.gridCenter[1])
@@ -622,12 +622,12 @@ class MiTiSegmenter(tk.Tk):
         
     def loadRawStack(self):
         path = filedialog.askopenfilename(filetypes = (("raw files","*.raw"),("all files","*.*")))
-        print(path)
+        #print(path)
         if path == "": 
             return False
         self.imageStack = None
         self.workingPath = os.path.dirname(path)
-        print(self.workingPath)
+        #print(self.workingPath)
         self.RawPath = path
         self.resPopUp = DownsampleWindow(self.master) 
         self.wait_window(self.resPopUp.top)
