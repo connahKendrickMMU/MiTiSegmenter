@@ -4,7 +4,7 @@ import tkinter.messagebox
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import * 
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, askquestion
 from skimage import measure, morphology
 import math
 import numpy as np  
@@ -114,6 +114,17 @@ class MiTiSegmenter(tk.Tk):
          
     def addTray(self, listbox):
         listbox.insert(END,"tray part: " + "_" +str(self.slides[2]))
+        # sort values 
+        items = listbox.get(0, listbox.size())
+        listbox.delete(0,listbox.size())
+        items = list(items)
+        ints = []
+        for i in range(len(items)):
+            if int(items[i].split("_")[1]) not in ints:
+                ints.append(int(items[i].split("_")[1]))
+        while(len(ints)>0):
+            listbox.insert(END,"tray part: " + "_" +str(min(ints)))
+            ints.remove(min(ints))
         
     def exportTrays(self, listbox): 
         items = listbox.get(0, END)
@@ -153,7 +164,12 @@ class MiTiSegmenter(tk.Tk):
             infoFile.close()
         if self.RawPath:
             image.close()
-        showinfo("Exported all the tray stacks")
+        #showinfo("Exported", "The trays have been exported")
+        res = askquestion("Exported", "The trays have been exported, would you like to load one now?")
+        if res == "yes":
+            #self.__init__()
+            self.loadImages()
+            self.show_frame(StackOptions)
         
     def applyTray(self,listboxValues):  
         onTray = False
@@ -239,7 +255,7 @@ class MiTiSegmenter(tk.Tk):
         if img is None: 
             return 
         try:
-            print(folders)
+            #print(folders)
             if folders == "Pro" or folders == "Seg":
                 img = morphology.remove_small_objects(img.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
@@ -315,8 +331,7 @@ class MiTiSegmenter(tk.Tk):
         elif imType == 2: # segmentation  
             dirName = "Seg"
         if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) + '/' + dirName) == False:
-            os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName) +'/'+dirName) 
-        print("i moved this back 1 tab as it would only run if the dir didnt exist")
+            os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName) +'/'+dirName)
         infoFile = open(self.workingPath + '/' + 'blobstacks'+'/' + str(blobName) +'/'+ dirName +'/' + "a_info.info","w") 
         infoFile.write("pixelsize " + str(self.pixelSizeX)  + " " + str(self.pixelSizeY) +"\n") 
         infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
@@ -379,7 +394,7 @@ class MiTiSegmenter(tk.Tk):
              if img.max() > 0 or i == shape[0]-1: 
                  if stack is None: 
                      start = i
-                     #print("start is " +str(start))
+                     #1qprint("start is " +str(start))
                      stack = img
                  else:
                      if len(stack.shape) < 3:
@@ -490,7 +505,7 @@ class MiTiSegmenter(tk.Tk):
                           self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o],folders[0])
          if self.RawPath:
                   self.DeleteTempStack()
-         showinfo("Completed processing")
+         showinfo("Completed processing", "Outputs are saved at "+self.workingPath + '/' + 'blobstacks')
          self.show_frame(StartPage)
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell, final = False):
@@ -634,14 +649,14 @@ class MiTiSegmenter(tk.Tk):
         dsample = self.resPopUp.value 
         if len(dsample) < 1: 
             dsample = 1
-            print(dsample)
+            #print(dsample)
             return False
         self.downsampleFactor = int(dsample)
         self.resPopUp = RawInfoWindow(self.master) 
         self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 4: 
-            print("false res")
+            #print("false res")
             return False
         resolution[0] = int(resolution[0])
         resolution[1] = int(resolution[1])
@@ -733,7 +748,7 @@ class MiTiSegmenter(tk.Tk):
         self.pixelSizeZ = 0
         self.offsetX = 0 
         self.offsetY = 0 
-        print("this code is a duplicat as load image stack, calle the load stack be change to add if downsampling")
+        #print("this code is a duplicat as load image stack, calle the load stack be change to add if downsampling")
         for i in range(len(info)): 
             temp = info.pop(0)
             if temp.startswith('p'): 

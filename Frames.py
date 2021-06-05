@@ -80,7 +80,7 @@ class SeperateTrays(tk.Frame):
         
     def deleteTray(self,listboxValues, controller): 
         if listboxValues.size() > 0:
-            controller.layers.pop(listboxValues.curselection()[0])
+            #controller.layers.pop(listboxValues.curselection()[0])
             listboxValues.delete(listboxValues.curselection()[0])
             controller.refreshImages
 
@@ -164,7 +164,7 @@ class TrayStack(tk.Frame):
         
     def deleteTray(self,listboxValues, controller): 
         if listboxValues.size() > 0:
-            controller.layers.pop(listboxValues.curselection()[0])
+            #controller.layers.pop(listboxValues.curselection()[0])
             listboxValues.delete(listboxValues.curselection()[0])
             controller.refreshImages
         
