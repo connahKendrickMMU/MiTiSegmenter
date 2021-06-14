@@ -391,39 +391,39 @@ class MiTiSegmenter(tk.Tk):
              cv.waitKey(1)
              
              img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-             if img.max() > 0 or i == shape[0]-1: 
+             if img.max() > 0: 
                  if stack is None: 
                      start = i
-                     #1qprint("start is " +str(start))
+                     print("start is " +str(start))
                      stack = img
                  else:
                      if len(stack.shape) < 3:
                          stack = np.stack((img,stack))
                      else: 
                          stack = np.concatenate((stack, img.reshape((1,img.shape[0],img.shape[1]))))
-                         # if i == shape[0]-1:
-                         #     stack[stack != 0] = 1 
-                         #     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
-                         #     stack = measure.label(stack)
-                         #     unique = np.unique(stack)
-                         #     for o in range(unique.shape[0]):  
-                         #         if unique[o] == 0: # background
-                         #             continue
-                         #         currentBlob = np.where(stack == unique[o])
-                         #         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
-                         #         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
-                         #         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
-                         #         # padd the bound by the down sample rate
-                         #         if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
-                         #             bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                         #             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start*2))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
-                         #     stack = None
-                         #     start = 0
+                         if i == shape[0]-1:
+                              stack[stack != 0] = 1 
+                              stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                              stack = measure.label(stack)
+                              unique = np.unique(stack)
+                              for o in range(unique.shape[0]):  
+                                  if unique[o] == 0: # background
+                                      continue
+                                  currentBlob = np.where(stack == unique[o])
+                                  Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
+                                  Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
+                                  X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
+                                  # padd the bound by the down sample rate
+                                  if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                                      bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                                      blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                              stack = None
+                              start = 0
              else:
                  if stack is None:
                      continue
                  else: 
-                     #print("first end " +str(i))
+                     print("first end " +str(i))
                      stack[stack != 0] = 1 
                      stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
                      stack = measure.label(stack)
@@ -437,7 +437,7 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
-                         #print("save blob "+ str(start))
+                         print("save blob "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
                              blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
@@ -481,11 +481,13 @@ class MiTiSegmenter(tk.Tk):
                               gotName = False
                   TrayToBlob.append(refPoint) 
          self.flipTrayVer()
+         print("bounds = " + str(len(bounds)))
          for i in range(len(bounds)):  # was grid names
                  if len(self.layers) > 0:
                      blobName = gridNames[i]
                  else: 
                      blobName = 'blob'+ str(i)
+                 print(self.workingPath + '/'+"blobstacks" + '/' + str(blobName))
                  if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) ) == False:
                      os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName))  
                  if generateRaw == 1: 
