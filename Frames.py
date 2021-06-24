@@ -90,7 +90,7 @@ class ThresAndCellStack(tk.Frame):
         label = Label(self, text ="Tray removal", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
         
-        self.cellBar = Scale(self, from_=1, to=255, orient=HORIZONTAL,resolution = 1, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustCellBase) 
+        self.cellBar = Scale(self, from_=1, to=255//2, orient=HORIZONTAL,resolution = 1, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(controller.cellBase)
         
