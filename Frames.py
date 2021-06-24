@@ -114,18 +114,18 @@ class ThresAndCellStack(tk.Frame):
 class LabelImages(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Labeling Options", font = LARGEFONT) 
+        label = Label(self, text ="File naming options", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 
         button1 = Button(self, text ="Numbered",command = lambda : controller.show_frame(Export)) 
         button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button1,"Import no label file, each seperate object is given a number as its export name")
+        CreateToolTip(button1,"User does not provide a CSV file containing specimen IDs. Each discrete sample is assigned a unique ID number upon export")
    
         # button to show frame 3 with text 
-        button2 = Button(self, text ="Import CSV label file",command = lambda : controller.show_frame(TrayStack)) 
+        button2 = Button(self, text ="Import spreadsheets of specimen IDs",command = lambda : controller.show_frame(TrayStack)) 
         button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button2,"Import a Comma Seperated Value file \nexportable from excel to show the system the names\n of each model")
+        CreateToolTip(button2,"Import a comma separated variable file containing specimen IDs, formatted in an equivalent grid structure to the associated plates")
         
         button3 = Button(self, text ="Back",command = lambda : controller.show_frame(ThresAndCellStack)) 
         button3.grid(row = 3, column = 0, padx = 10, pady = 10)
