@@ -38,7 +38,7 @@ class StackOptions(tk.Frame):
         # button to show frame 2 with text 
         button1 = Button(self, text ="Seperate Scanned objects",command = lambda : controller.show_frame(ThresAndCellStack)) 
         button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button1,"This allows you to remove a tray holding the scanned\n objects it then seperates all the object into individual blobs")
+        CreateToolTip(button1,"This allows you to remove a plate holding the scanned\n objects it then seperates all the object into individual blobs")
     
         # button to show frame 2 with text 
         button2 = Button(self, text ="Generate unprocessed image stacks",command = lambda : controller.ExportUnProcessedStack(True)) 
@@ -46,23 +46,23 @@ class StackOptions(tk.Frame):
         CreateToolTip(button2,"This splits a raw image into a stack of tif images")
         
         # button to show frame 2 with text 
-        button3 = Button(self, text ="Seperate Trays",command = lambda : controller.show_frame(SeperateTrays)) 
+        button3 = Button(self, text ="Seperate Plates",command = lambda : controller.show_frame(SeperateTrays)) 
         button3.grid(row = 3, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button3,"If using multiple trays this allows you create seperate tif stacks\n if you have a low memory machine this will help")
+        CreateToolTip(button3,"If using multiple plate this allows you create seperate tif stacks\n if you have a low memory machine this will help")
    
 class SeperateTrays(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Seperate trays", font = LARGEFONT) 
+        label = Label(self, text ="Seperate plates", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         listboxValues = Listbox(self) 
         listboxValues.grid(row=1, column = 0, rowspan=2, sticky = W) 
         
         # button to show frame 2 with text 
-        button1 = Button(self, text ="Separate Trays", command = lambda : controller.exportTrays(listboxValues)) 
+        button1 = Button(self, text ="Separate Plates", command = lambda : controller.exportTrays(listboxValues)) 
         button1.grid(row = 1, column = 3, padx = 10, pady = 10) 
-        CreateToolTip(button1,"Seperate the trays")
+        CreateToolTip(button1,"Seperate the plates")
         
         # button to add a tray
         addTray = Button(self, text ="Add Tray", command = lambda : controller.addTray(listboxValues)) 
@@ -87,7 +87,7 @@ class SeperateTrays(tk.Frame):
 class ThresAndCellStack(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Tray removal", font = LARGEFONT) 
+        label = Label(self, text ="Threshold specimens", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
         
         self.cellBar = Scale(self, from_=1, to=255//2, orient=HORIZONTAL,resolution = 1, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustCellBase) 
