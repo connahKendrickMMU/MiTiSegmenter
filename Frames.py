@@ -27,7 +27,7 @@ class StartPage(tk.Frame):
         button2 = Button(self, text ="Load Raw Image", 
         command = lambda : controller.LoadImagesSelected(StackOptions,True)) 
         button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button2, "Load a raw image, this will require you to input the scanner reolutions\n how big each pixel is X,Y,Z and the image size, such as 2000 images\n 512*512 in size")
+        CreateToolTip(button2, "Load a raw image. This will require you to input the XYZ scan resolution in millimetres, and the XYZ dimensions of the image volume")
         
 class StackOptions(tk.Frame): 
     def __init__(self, parent, controller):
