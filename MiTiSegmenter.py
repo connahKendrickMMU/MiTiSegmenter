@@ -729,7 +729,9 @@ class MiTiSegmenter(tk.Tk):
                 break 
         
         if infoFile == "":
-            showinfo("No Scanner info file", path + " : contains no .info file from the scanner!\nLets create one now, then reload the stack")
+            showinfo("No Scanner info file", path + " : contains no .info file from the scanner!\nLet's create one now, then reload the stack.\n"+
+                    "An info file contains the information used to rebuild\n the scan images, so both the image names and the real-world distance\n"+
+                    " between each scan. It also holds how big the width and\n height of each pixel is. Using this, we can reconstruct the scan and\n build a to-scale 3D model.)
             self.generateInfoFile()
             return False
         
