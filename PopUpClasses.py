@@ -25,7 +25,7 @@ class InfoWindow(object):
 class RawInfoWindow(object):
     def __init__(self,master):
         top=self.top=Toplevel(master)
-        self.infoLabel=Label(top,text="Please enter file resoltuion (width,height,layers and bit rate, scanner will provide details) \n with ; to separate values.")
+        self.infoLabel=Label(top,text="Please enter image resoltuion (width,height,layers and bit rate, scanner will provide details) \n with ; to separate values.")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
         self.infoEntry.insert(0,"2965;2361;2119;16")
