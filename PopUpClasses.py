@@ -69,7 +69,7 @@ class GenerateTiffStackWindow(object):
         self.generate3DModels = IntVar() 
         self.generateSegmentedTiffs = IntVar()
         
-        self.infoLabel=Label(top,text="Please choose the options for tiff stack generation")
+        self.infoLabel=Label(top,text="Please select the required file types for export")
         self.infoLabel.pack()
         
         self.generateRawTiffsCheck = Checkbutton(top,text="Generate Raw Tiffs", variable = self.generateRawTiffs) 
@@ -78,11 +78,11 @@ class GenerateTiffStackWindow(object):
         self.generateProcessedTiffsCheck = Checkbutton(top,text="Generate Processed Tiffs", variable = self.generateProcessedTiffs) 
         self.generateProcessedTiffsCheck.pack()
         
-        self.generate3DModelCheck = Checkbutton(top,text="Generate 3D Models", variable = self.generate3DModels) 
-        self.generate3DModelCheck.pack()
-        
         self.generateSegmentedTiffsCheck = Checkbutton(top,text="Generate Segmented Tiffs", variable = self.generateSegmentedTiffs) 
         self.generateSegmentedTiffsCheck.pack()
+        
+        self.generate3DModelCheck = Checkbutton(top,text="Generate 3D surface mesh", variable = self.generate3DModels) 
+        self.generate3DModelCheck.pack()
         
         self.infoButton=Button(top,text='Ok',command=self.cleanup)
         self.infoButton.pack()
