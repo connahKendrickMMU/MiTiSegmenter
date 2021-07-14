@@ -277,7 +277,8 @@ class MiTiSegmenter(tk.Tk):
             thefile.close()   
              
             pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
-            o3d.io.write_triangle_mesh(path+'/'+"sync.ply", pcd_load)  
+            print(os.path.basename(os.path.dirname(path)))
+            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
             os.remove(os.path.expanduser('~')+'/meshFull.obj')
         except: 
             print("file not working properly") 
