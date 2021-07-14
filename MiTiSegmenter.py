@@ -18,11 +18,11 @@ import shutil
 from PopUpClasses import *
 from Frames import *
 
-
+# z has be top
 ####### version info #######
 # python 3.6 # tkinter # PIL # numpy = 1.16.2 # cv2 = 4.1.1 # os # open3d = 0.8.0.0 # random   
 ####### Build exe ####### 
-# pyinstaller MiTiSegmenter.py --onefile
+# pyinstaller MiTiSegmenter.py --icon=logo.ico --onefile
 
 class MiTiSegmenter(tk.Tk): 
     # initialisation 

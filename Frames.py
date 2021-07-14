@@ -41,14 +41,19 @@ class StackOptions(tk.Frame):
         CreateToolTip(button1,"This allows you to remove a plate holding the scanned\n objects it then seperates all the object into individual blobs")
     
         # button to show frame 2 with text 
-        button2 = Button(self, text ="Generate unprocessed image stacks",command = lambda : controller.ExportUnProcessedStack(True)) 
-        button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button2,"This splits a raw image into a stack of tif images")
+        #button2 = Button(self, text ="(Optional) Generate Tiff stacks",command = lambda : controller.ExportUnProcessedStack(True)) 
+        #button2.grid(row = 2, column = 0, padx = 10, pady = 10) 
+        #CreateToolTip(button2,"This splits a raw image into a stack of tif images")
         
         # button to show frame 2 with text 
         button3 = Button(self, text ="Seperate Plates",command = lambda : controller.show_frame(SeperateTrays)) 
+<<<<<<< Updated upstream
         button3.grid(row = 3, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button3,"If using multiple plate this allows you create seperate tif stacks\n if you have a low memory machine this will help")
+=======
+        button3.grid(row = 2, column = 0, padx = 10, pady = 10) 
+        CreateToolTip(button3,"If using multiple plates this allows you create seperate tif stacks\n if you have a low memory machine this will help")
+>>>>>>> Stashed changes
    
 class SeperateTrays(tk.Frame):  
     def __init__(self, parent, controller): 

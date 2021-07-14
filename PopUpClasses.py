@@ -93,7 +93,7 @@ class GenerateTiffStackWindow(object):
 class GetTrayCSVs(object): 
     def __init__(self,master,trayCount):
         top=self.top=Toplevel(master)
-        self.infoLabel=Label(top,text="Select directories for each trays csv, or click Ok to leave blank")
+        self.infoLabel=Label(top,text="Select directories for each plates csv, or click Ok to leave blank")
         self.infoLabel.pack()
         self.paths = "" 
         self.trayCount = trayCount
