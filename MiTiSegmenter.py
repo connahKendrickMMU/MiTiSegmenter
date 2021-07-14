@@ -792,21 +792,27 @@ class MiTiSegmenter(tk.Tk):
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         self.imgSide = self.imageStack[:,0,:]
         self.imgFront = self.imageStack[:,:,0] 
-        cv.namedWindow("Front",cv.WINDOW_KEEPRATIO)
+        cv.namedWindow("Z",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgFront.shape[1]
-        cv.resizeWindow("Front", 300,int(self.imgFront.shape[0]*r));
-        cv.createTrackbar("image", "Front" , self.imageStack.shape[2]//2, self.imageStack.shape[2]-1, self.updateFront) 
+        cv.resizeWindow("Z", 300,int(self.imgFront.shape[0]*r));
+        cv.createTrackbar("image", "Z" , self.imageStack.shape[2]//2, self.imageStack.shape[2]-1, self.updateFront) 
         self.updateFront(self.imageStack.shape[2]//2)
-        cv.namedWindow("Side",cv.WINDOW_KEEPRATIO)
+        cv.moveWindow("Z",0,0)
+        
+        cv.namedWindow("X",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgSide.shape[1]
-        cv.resizeWindow("Side", 300,int(self.imgSide.shape[0]*r));
-        cv.createTrackbar("image", "Side" , self.imageStack.shape[1]//2, self.imageStack.shape[1]-1, self.updateSide) 
+        cv.resizeWindow("X", 300,int(self.imgSide.shape[0]*r));
+        cv.createTrackbar("image", "X" , self.imageStack.shape[1]//2, self.imageStack.shape[1]-1, self.updateSide) 
         self.updateSide(self.imageStack.shape[1]//2)
-        cv.namedWindow("Top",cv.WINDOW_KEEPRATIO)
+        cv.moveWindow("X",300,0)
+        
+        cv.namedWindow("Y",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgTop.shape[1]
-        cv.resizeWindow("Top", 300,int(self.imgTop.shape[0]*r));
-        cv.createTrackbar("image", "Top" , self.imageStack.shape[0]//2, self.imageStack.shape[0]-1, self.updateTop) 
+        cv.resizeWindow("Y", 300,int(self.imgTop.shape[0]*r));
+        cv.createTrackbar("image", "Y" , self.imageStack.shape[0]//2, self.imageStack.shape[0]-1, self.updateTop) 
         self.updateTop(self.imageStack.shape[0]//2)
+        cv.moveWindow("Y",600,0)
+        
         cv.waitKey(1)
         self.frames[TrayAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
         self.frames[TrayAlign].MoveGridX.configure(to = self.imgTop.shape[1]*2)
@@ -820,14 +826,14 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        cv.imshow("Front",temp)
+        cv.imshow("Z",temp)
         cv.waitKey(1)
         
     def updateSide(self, val):
         self.slides[1] = int(val)
         temp = self.imageStack[:,int(val)-1,:]
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        cv.imshow("Side",temp)
+        cv.imshow("X",temp)
         cv.waitKey(1)
         
     def updateTop(self, val):
@@ -836,7 +842,7 @@ class MiTiSegmenter(tk.Tk):
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,int(val))
-        cv.imshow("Top",temp)
+        cv.imshow("Y",temp)
         cv.waitKey(1)
 
 app = MiTiSegmenter() 
