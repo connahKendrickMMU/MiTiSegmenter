@@ -36,7 +36,7 @@ class StackOptions(tk.Frame):
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 
-        button1 = Button(self, text ="Seperate Scanned objects",command = lambda : controller.show_frame(ThresAndCellStack)) 
+        button1 = Button(self, text ="Seperate Scanned Objects",command = lambda : controller.show_frame(ThresAndCellStack)) 
         button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button1,"This allows you to remove a plate holding the scanned\n objects it then seperates all the object into individual blobs")
     
@@ -47,18 +47,15 @@ class StackOptions(tk.Frame):
         
         # button to show frame 2 with text 
         button3 = Button(self, text ="Seperate Plates",command = lambda : controller.show_frame(SeperateTrays)) 
-<<<<<<< Updated upstream
         button3.grid(row = 3, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button3,"If using multiple plate this allows you create seperate tif stacks\n if you have a low memory machine this will help")
-=======
         button3.grid(row = 2, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button3,"If using multiple plates this allows you create seperate tif stacks\n if you have a low memory machine this will help")
->>>>>>> Stashed changes
    
 class SeperateTrays(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Seperate plates", font = LARGEFONT) 
+        label = Label(self, text ="Seperate Plates", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         listboxValues = Listbox(self) 
@@ -92,7 +89,7 @@ class SeperateTrays(tk.Frame):
 class ThresAndCellStack(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Threshold specimens", font = LARGEFONT) 
+        label = Label(self, text ="Threshold Specimens", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
         
         self.cellBar = Scale(self, from_=1, to=255//2, orient=HORIZONTAL,resolution = 1, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustCellBase) 
@@ -119,7 +116,7 @@ class ThresAndCellStack(tk.Frame):
 class LabelImages(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="File naming options", font = LARGEFONT) 
+        label = Label(self, text ="File Naming Options", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 
@@ -159,11 +156,11 @@ class TrayStack(tk.Frame):
         button2.grid(row = 1, column = 0, padx = 10, pady = 10)   
         CreateToolTip(button2,"Automatically try to find the center of trays in the scan")
         
-        removeTray = Button(self, text ="remove tray",command = lambda : self.deleteTray(listboxValues, controller)) 
+        removeTray = Button(self, text ="Remove Tray",command = lambda : self.deleteTray(listboxValues, controller)) 
         removeTray.grid(row = 1, column = 1, padx = 10, pady = 10)   
         CreateToolTip(removeTray,"Select a tray you want to delete and then press this button to remove the tray")
         
-        addTray = Button(self, text ="add tray",command = lambda : controller.addTray(listboxValues)) 
+        addTray = Button(self, text ="Add Tray",command = lambda : controller.addTray(listboxValues)) 
         addTray.grid(row = 1, column = 2, padx = 10, pady = 10)   
         CreateToolTip(addTray,"Use the top slider and click the add tray button\n,to add this as a slice")
         
@@ -224,7 +221,7 @@ class TrayAlign(tk.Frame):
 class Export(tk.Frame):  
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent) 
-        label = Label(self, text ="Export objects", font = LARGEFONT) 
+        label = Label(self, text ="Export Objects", font = LARGEFONT) 
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 

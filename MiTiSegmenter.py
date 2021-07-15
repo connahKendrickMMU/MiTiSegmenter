@@ -10,9 +10,9 @@ import math
 import numpy as np  
 import cv2 as cv
 import os
-import open3d as o3d 
+#import open3d as o3d 
 import shutil
-
+import meshio
 
 # our file
 from PopUpClasses import *
@@ -276,9 +276,11 @@ class MiTiSegmenter(tk.Tk):
             
             thefile.close()   
              
-            pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
+            #pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
+            mesh = meshio.read(os.path.expanduser('~')+'/meshFull.obj')
             print(os.path.basename(os.path.dirname(path)))
-            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
+            #o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
+            mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
             os.remove(os.path.expanduser('~')+'/meshFull.obj')
         except: 
             print("file not working properly") 
@@ -308,7 +310,7 @@ class MiTiSegmenter(tk.Tk):
             os.remove(self.imageOaths[i])
         self.imagePaths = []
         
-    def makeAllPointCloud(self):  
+    '''def makeAllPointCloud(self):  
          if self.imageStack is None: 
              return
          verts, faces, normals, values = measure.marching_cubes_lewiner((self.imageStack != 0), 0)#fit this into the model from open3d
@@ -321,9 +323,11 @@ class MiTiSegmenter(tk.Tk):
          for item in faces:
            thefile.write("f {0}//{0} {1}//{1} {2}//{2}\n".format(item[0],item[1],item[2]))  
          thefile.close()
-         pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj') 
-         o3d.io.write_triangle_mesh(os.path.expanduser('~')+'/sync.ply', pcd_load)  
-         os.remove(os.path.expanduser('~')+'/meshFull.obj')
+         #pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj') 
+         #o3d.io.write_triangle_mesh(os.path.expanduser('~')+'/sync.ply', pcd_load)  
+         mesh = meshio.read(os.path.expanduser('~')+'/meshFull.obj')
+         mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
+         os.remove(os.path.expanduser('~')+'/meshFull.obj')'''
          
     def WriteStacks(self, i, blobName, bounds, imType):
         dirName = "Raw" 
@@ -416,7 +420,8 @@ class MiTiSegmenter(tk.Tk):
                                   X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                                   # padd the bound by the down sample rate
                                   if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
-                                      bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                                      print("added padd")
+                                      bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin-(Y)self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                                       blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                               stack = None
                               start = 0
@@ -732,7 +737,7 @@ class MiTiSegmenter(tk.Tk):
         if infoFile == "":
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner!\nLet's create one now, then reload the stack.\n"+
                     "An info file contains the information used to rebuild\n the scan images, so both the image names and the real-world distance\n"+
-                    " between each scan. It also holds how big the width and\n height of each pixel is. Using this, we can reconstruct the scan and\n build a to-scale 3D model.)
+                    " between each scan. It also holds how big the width and\n height of each pixel is. Using this, we can reconstruct the scan and\n build a to-scale 3D model.")
             self.generateInfoFile()
             return False
         
