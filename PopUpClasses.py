@@ -2,6 +2,7 @@ from tkinter import filedialog
 from tkinter import * 
 from PIL import Image, ImageTk  
 from tkinter.messagebox import showinfo 
+from ToolTip import CreateToolTip 
 
 class InfoWindow(object):
     def __init__(self,master):
@@ -25,7 +26,7 @@ class InfoWindow(object):
 class RawInfoWindow(object):
     def __init__(self,master):
         top=self.top=Toplevel(master)
-        self.infoLabel=Label(top,text="Please enter image resoltuion (width,height,layers and bit rate, scanner will provide details) \n with ; to separate values.")
+        self.infoLabel=Label(top,text="Please enter image resoltuion (width,height,layers and bit rate, scanner will provide details) with ; to separate values.")
         self.infoLabel.pack()
         self.infoEntry=Entry(top)
         self.infoEntry.insert(0,"2965;2361;2119;16")
@@ -74,15 +75,19 @@ class GenerateTiffStackWindow(object):
         
         self.generateRawTiffsCheck = Checkbutton(top,text="Generate Raw Tiffs", variable = self.generateRawTiffs) 
         self.generateRawTiffsCheck.pack() 
+        CreateToolTip(self.generateRawTiffsCheck,"Export cropped raw input data without thresholding or further processing, potentially including sections of the mount")
         
         self.generateProcessedTiffsCheck = Checkbutton(top,text="Generate Processed Tiffs", variable = self.generateProcessedTiffs) 
         self.generateProcessedTiffsCheck.pack()
+        CreateToolTip(self.generateProcessedTiffsCheck, "Export the result of segmentation. Pixels from the original dataset falling within the binary mask are exported")
         
         self.generateSegmentedTiffsCheck = Checkbutton(top,text="Generate Segmented Tiffs", variable = self.generateSegmentedTiffs) 
         self.generateSegmentedTiffsCheck.pack()
+        CreateToolTip(self.generateSegmentedTiffsCheck,"Export a binary mask representing the specimen detected during imaging blobbing")
         
         self.generate3DModelCheck = Checkbutton(top,text="Generate 3D surface mesh", variable = self.generate3DModels) 
         self.generate3DModelCheck.pack()
+        CreateToolTip(self.generate3DModelCheck,"Generates a 3D model of the selected Tiff stacks, for best results the processed or segmentation should be checked")
         
         self.infoButton=Button(top,text='Ok',command=self.cleanup)
         self.infoButton.pack()

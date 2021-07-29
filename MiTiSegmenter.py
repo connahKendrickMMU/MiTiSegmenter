@@ -128,12 +128,17 @@ class MiTiSegmenter(tk.Tk):
         
     def exportPlates(self, listbox): 
         items = listbox.get(0, END)
+        items = list(items)
+        if len(items) == 0:
+            return
+        items.insert(0,"plate part: " + "_" +str(0))
+        items.append("plate part: " + "_" +str(self.imageStack.shape[0]))
         numOfOutputs = len(items)
         # create the folders 
         lastOn = 0
         if self.RawPath:
             image = open(self.RawPath)
-        for i in range(numOfOutputs): 
+        for i in range(1, numOfOutputs): 
             if os.path.exists(self.workingPath+'/plate' + str(i)) == False:
                 os.mkdir(self.workingPath+'/plate' + str(i))
             numberOfFrames = int(items[i].split('_')[1]) 
@@ -165,7 +170,7 @@ class MiTiSegmenter(tk.Tk):
         if self.RawPath:
             image.close()
         #showinfo("Exported", "The plates have been exported")
-        res = askquestion("Exported", "The plates have been exported, would you like to load one now?")
+        res = askquestion("Exported", "The plates have been successfully exported as separate image stacks. Would you like to import one now?")
         if res == "yes":
             #self.__init__()
             self.loadImages()
@@ -217,6 +222,8 @@ class MiTiSegmenter(tk.Tk):
     
     def adjustCellBase(self,val): 
         self.cellBase = int(val) 
+        self.frames[ThresAndCellStack].thresholdBarMin.configure(resolution = self.cellBase)
+        self.frames[ThresAndCellStack].thresholdBar.configure(resolution = self.cellBase)
         self.refreshImages()
     
     def adjustThresholdMax(self,val):
@@ -256,7 +263,7 @@ class MiTiSegmenter(tk.Tk):
             return 
         try:
             #print(folders)
-            if folders == "Pro" or folders == "Seg":
+            if folders == "Processed files" or folders == "Segmentation masks":
                 img = morphology.remove_small_objects(img.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
@@ -330,11 +337,11 @@ class MiTiSegmenter(tk.Tk):
          os.remove(os.path.expanduser('~')+'/meshFull.obj')'''
          
     def WriteStacks(self, i, sampleName, bounds, imType):
-        dirName = "Raw" 
+        dirName = "Raw files" 
         if imType == 1: #processed 
-            dirName = "Pro"
+            dirName = "Processed files"
         elif imType == 2: # segmentation  
-            dirName = "Seg"
+            dirName = "Segmentation masks"
         if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName) + '/' + dirName) == False:
             os.mkdir(self.workingPath + '/'+"MiTiSegmenter"+ '/' + str(sampleName) +'/'+dirName)
         infoFile = open(self.workingPath + '/' + 'MiTiSegmenter'+'/' + str(sampleName) +'/'+ dirName +'/' + "a_info.info","w") 
@@ -714,8 +721,9 @@ class MiTiSegmenter(tk.Tk):
         self.setInitGraphs()
         return True
         
-    def loadImages(self):
-        path = filedialog.askdirectory() 
+    def loadImages(self, path=""):
+        if path =="":
+            path = filedialog.askdirectory() 
         if path == "": 
             return
         self.imageStack = None 
@@ -733,11 +741,11 @@ class MiTiSegmenter(tk.Tk):
                 break 
         
         if infoFile == "":
-            showinfo("No Scanner info file", path + " : contains no .info file from the scanner!\nLet's create one now, then reload the stack.\n"+
-                    "An info file contains the information used to rebuild\n the scan images, so both the image names and the real-world distance\n"+
-                    " between each scan. It also holds how big the width and\n height of each pixel is. Using this, we can reconstruct the scan and\n build a to-scale 3D model.")
+            showinfo("No Scanner info file", path + " : contains no .info file from the scanner! Let's create one now, then reload the stack. "+
+                    "An info file contains the information used to rebuild the scan images, so both the image names and the real-world distance"+
+                    " between each scan. It also holds how big the width and height of each pixel is. Using this, we can reconstruct the scan and build a to-scale 3D model.")
             self.generateInfoFile()
-            return False
+            return self.loadImages(path=path)
         
         self.resPopUp = DownsampleWindow(self.master) 
         self.wait_window(self.resPopUp.top)

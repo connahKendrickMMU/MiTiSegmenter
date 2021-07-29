@@ -36,9 +36,9 @@ class StackOptions(tk.Frame):
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 
-        button1 = Button(self, text ="Separate Scanned Objects",command = lambda : controller.show_frame(ThresAndCellStack)) 
+        button1 = Button(self, text ="Run MiTiSegmenter",command = lambda : controller.show_frame(ThresAndCellStack)) 
         button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button1,"This allows you to remove a plate holding the scanned\n objects it then seperates all the object into individual samples")
+        CreateToolTip(button1,"Detects discrete objects of interest within the plates. Exports a tiff stack per object and (optionally) a 3D surface file.")
     
         # button to show frame 2 with text 
         #button2 = Button(self, text ="(Optional) Generate Tiff stacks",command = lambda : controller.ExportUnProcessedStack(True)) 
@@ -46,11 +46,9 @@ class StackOptions(tk.Frame):
         #CreateToolTip(button2,"This splits a raw image into a stack of tif images")
         
         # button to show frame 2 with text 
-        button3 = Button(self, text ="Separate Plates",command = lambda : controller.show_frame(SeparatePlates)) 
-        button3.grid(row = 3, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button3,"If using multiple plate this allows you create seperate tif stacks\n if you have a low memory machine this will help")
+        button3 = Button(self, text ="Preprocessing: Export individual plates as image stacks",command = lambda : controller.show_frame(SeparatePlates)) 
         button3.grid(row = 2, column = 0, padx = 10, pady = 10) 
-        CreateToolTip(button3,"If using multiple plates this allows you create seperate tif stacks\n if you have a low memory machine this will help")
+        CreateToolTip(button3,"Optional. Allows users to subdivide large CT volumes comprising multiple stacked plates into separate tiff stacks prior to running MiTiSegmenter. Helps reduce memory usage")
    
 class SeparatePlates(tk.Frame):  
     def __init__(self, parent, controller): 
@@ -63,7 +61,7 @@ class SeparatePlates(tk.Frame):
         
         # button to show frame 2 with text 
         button1 = Button(self, text ="Separate Plates", command = lambda : controller.exportPlates(listboxValues)) 
-        button1.grid(row = 1, column = 3, padx = 10, pady = 10) 
+        button1.grid(row = 3, column = 3, padx = 10, pady = 10) 
         CreateToolTip(button1,"Separate the plates")
         
         # button to add a plate
@@ -80,7 +78,7 @@ class SeparatePlates(tk.Frame):
         
         # button to show frame 3 with text 
         button2 = Button(self, text ="Back", command = lambda : controller.show_frame(StackOptions)) 
-        button2.grid(row = 3, column = 3, padx = 10, pady = 10) 
+        button2.grid(row = 4, column = 3, padx = 10, pady = 10) 
         CreateToolTip(button2,"Returns to the stack options menu")
         
     def deletePlate(self,listboxValues, controller): 
@@ -98,6 +96,10 @@ class ThresAndCellStack(tk.Frame):
         self.cellBar = Scale(self, from_=1, to=255//2, orient=HORIZONTAL,resolution = 1, label="Cel-shade Base Value", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustCellBase) 
         self.cellBar.grid(row=2,column=0,sticky = NW) 
         self.cellBar.set(controller.cellBase)
+        CreateToolTip(self.cellBar,"Optional: quantise the image gradient. Reduces the total number of greyscale values+\n"+
+                      "by binning similar values by a predetermined factor (base value). For example, selecting a base value\n"+
+                      "of 5 will reduce the total number of grey values in a 8-bit image from 255 to 51, thereby\n"+
+                      "assisting the user with manually selecting a threshold cut-off value")
         
         self.thresholdBar = Scale(self, from_=0, to=255, orient=HORIZONTAL, label="Threshold Value Max", length=self.winfo_screenwidth()/3.6, sliderlength=self.winfo_screenheight()//100, command=controller.adjustThresholdMax) 
         self.thresholdBar.grid(row=3,column=0,sticky = W) 
@@ -123,7 +125,7 @@ class LabelImages(tk.Frame):
         label.grid(row = 0, column = 0, padx = 10, pady = 10) 
    
         # button to show frame 2 with text 
-        button1 = Button(self, text ="Numbered",command = lambda : controller.show_frame(Export)) 
+        button1 = Button(self, text ="Numbered",command = lambda : controller.exportTiffStacks()) 
         button1.grid(row = 1, column = 0, padx = 10, pady = 10) 
         CreateToolTip(button1,"User does not provide a CSV file containing specimen IDs. Each discrete sample is assigned a unique ID number upon export")
    
