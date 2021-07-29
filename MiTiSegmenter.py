@@ -31,7 +31,7 @@ class MiTiSegmenter(tk.Tk):
         tk.report_callback_exception = self.showError
         self.thresholdMax = 255  
         self.thresholdMin = 0
-        self.blobMinSizeVal = 15
+        self.sampleMinSizeVal = 15
         self.downsampleFactor = 1
         self.cellBase = 1
         self.usedThres =(0,0)
@@ -41,12 +41,12 @@ class MiTiSegmenter(tk.Tk):
         self.viewThresholdVar = 1
         self.viewCellVar = 1 
         self.layers = []
-        self.traySize = 50
-        self.trayCSV = [] 
+        self.plateSize = 50
+        self.plateCSV = [] 
         self.imagePaths =[]
         self.workingPath = "" 
         self.RawPath = ""
-        self.blobCenterOfMass = []
+        self.sampleCenterOfMass = []
         self.TL = 0 
         self.TR = 0
         self.BL = 0
@@ -58,7 +58,7 @@ class MiTiSegmenter(tk.Tk):
         container.grid_rowconfigure(0, weight = 1) 
         container.grid_columnconfigure(0, weight = 1) 
         self.frames = {}   
-        for F in (StartPage, StackOptions, SeperateTrays, SeperateTrays, ThresAndCellStack, LabelImages, TrayStack,  TrayAlign, Export):
+        for F in (StartPage, StackOptions, SeparatePlates, ThresAndCellStack, LabelImages, PlateStack,  PlateAlign, Export):
             frame = F(container, self) 
             self.frames[F] = frame  
             frame.grid(row = 0, column = 0, sticky ="nsew") 
@@ -82,38 +82,38 @@ class MiTiSegmenter(tk.Tk):
         err = traceback.format_exception(*args) 
         messagebox.showerror('Exception: ', err)
     
-    def flipTrayHor(self): 
-        for i in range(len(self.trayCSV)):  
-                self.trayCSV[i] = np.fliplr(self.trayCSV[i])
+    def flipPlateHor(self): 
+        for i in range(len(self.plateCSV)):  
+                self.plateCSV[i] = np.fliplr(self.plateCSV[i])
         self.refreshImages()
                 
-    def flipTrayVer(self): 
-        for i in range(len(self.trayCSV)):  
-                self.trayCSV[i] = np.flipud(self.trayCSV[i]) 
+    def flipPlateVer(self): 
+        for i in range(len(self.plateCSV)):  
+                self.plateCSV[i] = np.flipud(self.plateCSV[i]) 
         self.refreshImages()
                 
     def loadCSV(self): 
         if len(self.layers) == 0:
             print("no layers created")
-        self.resTrayPopUp = GetTrayCSVs(self.master,self.layers) 
-        self.wait_window(self.resTrayPopUp.top)  
-        self.resTrayPopUp = self.resTrayPopUp.value
-        self.resTrayPopUp = self.resTrayPopUp.split("*")
-        for i in range(len(self.resTrayPopUp)):
-            if self.resTrayPopUp[i] == ' ': 
-                self.trayCSV.append(None)
-            elif self.resTrayPopUp[i] == '':
+        self.resPlatePopUp = GetPlateCSVs(self.master,self.layers) 
+        self.wait_window(self.resPlatePopUp.top)  
+        self.resPlatePopUp = self.resPlatePopUp.value
+        self.resPlatePopUp = self.resPlatePopUp.split("*")
+        for i in range(len(self.resPlatePopUp)):
+            if self.resPlatePopUp[i] == ' ': 
+                self.plateCSV.append(None)
+            elif self.resPlatePopUp[i] == '':
                 print("blankspace")
             else: 
-                tray = np.loadtxt(self.resTrayPopUp[i], delimiter=',',dtype='U')
-                self.trayCSV.append(tray)
+                plate = np.loadtxt(self.resPlatePopUp[i], delimiter=',',dtype='U')
+                self.plateCSV.append(plate)
         for i in range(len(self.layers)):
             # setup base layers
             self.putGridOnImage(np.zeros((self.imageStack.shape[1],self.imageStack.shape[2])), self.layers[i])
         self.refreshImages()
          
-    def addTray(self, listbox):
-        listbox.insert(END,"tray part: " + "_" +str(self.slides[2]))
+    def addPlate(self, listbox):
+        listbox.insert(END,"plate part: " + "_" +str(self.slides[2]))
         # sort values 
         items = listbox.get(0, listbox.size())
         listbox.delete(0,listbox.size())
@@ -123,10 +123,10 @@ class MiTiSegmenter(tk.Tk):
             if int(items[i].split("_")[1]) not in ints:
                 ints.append(int(items[i].split("_")[1]))
         while(len(ints)>0):
-            listbox.insert(END,"tray part: " + "_" +str(min(ints)))
+            listbox.insert(END,"plate part: " + "_" +str(min(ints)))
             ints.remove(min(ints))
         
-    def exportTrays(self, listbox): 
+    def exportPlates(self, listbox): 
         items = listbox.get(0, END)
         numOfOutputs = len(items)
         # create the folders 
@@ -134,10 +134,10 @@ class MiTiSegmenter(tk.Tk):
         if self.RawPath:
             image = open(self.RawPath)
         for i in range(numOfOutputs): 
-            if os.path.exists(self.workingPath+'/tray' + str(i)) == False:
-                os.mkdir(self.workingPath+'/tray' + str(i))
+            if os.path.exists(self.workingPath+'/plate' + str(i)) == False:
+                os.mkdir(self.workingPath+'/plate' + str(i))
             numberOfFrames = int(items[i].split('_')[1]) 
-            infoFile = open(self.workingPath+'/tray' + str(i) +'/' + "a_info.info","w") 
+            infoFile = open(self.workingPath+'/plate' + str(i) +'/' + "a_info.info","w") 
             infoFile.write("pixelsize " + str(self.pixelSizeX)  + " " + str(self.pixelSizeY) +"\n") 
             infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n") 
             startLast = lastOn
@@ -149,13 +149,13 @@ class MiTiSegmenter(tk.Tk):
                     img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
                     cv.imshow("loading",img) 
                     cv.waitKey(1)
-                    cv.imwrite(self.workingPath+'/tray' + str(i)+'/'+str(o).zfill(6)+".tiff", img) 
-                    #showinfo("path = " + self.workingPath+'/tray' + str(i)+'/'+str(o).zfill(6)+".tiff")
+                    cv.imwrite(self.workingPath+'/plate' + str(i)+'/'+str(o).zfill(6)+".tiff", img) 
+                    #showinfo("path = " + self.workingPath+'/plate' + str(i)+'/'+str(o).zfill(6)+".tiff")
                     infoFile.write('"' + str(i).zfill(6)+".tiff" +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[startLast]) +"\n")
                     lastOn = o
             else:
                 for o in range(lastOn, numberOfFrames): 
-                    shutil.copyfile(self.workingPath+'/' + self.imagePaths[o],self.workingPath+'/tray' + str(i)+ '/' +self.imagePaths[o]) 
+                    shutil.copyfile(self.workingPath+'/' + self.imagePaths[o],self.workingPath+'/plate' + str(i)+ '/' +self.imagePaths[o]) 
                     
                     cv.imshow("loading",self.imageStack[o,:,:]) 
                     cv.waitKey(1)
@@ -164,44 +164,44 @@ class MiTiSegmenter(tk.Tk):
             infoFile.close()
         if self.RawPath:
             image.close()
-        #showinfo("Exported", "The trays have been exported")
-        res = askquestion("Exported", "The trays have been exported, would you like to load one now?")
+        #showinfo("Exported", "The plates have been exported")
+        res = askquestion("Exported", "The plates have been exported, would you like to load one now?")
         if res == "yes":
             #self.__init__()
             self.loadImages()
             self.show_frame(StackOptions)
         
-    def applyTray(self,listboxValues):  
-        onTray = False
+    def applyPlate(self,listboxValues):  
+        onPlate = False
         self.layers = [] 
         listboxValues.delete(0,listboxValues.size())
-        trayStart = 0
-        trayCount = 0
+        plateStart = 0
+        plateCount = 0
         for i in range(0,self.imageStack.shape[0]): 
             temp = self.imageStack[i,:,:].astype('uint8') 
             temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-            if np.where(temp>0)[0].shape[0] > self.blobMinSizeVal*10:
-                if onTray == False: 
-                    onTray = True
-                    trayStart = i 
+            if np.where(temp>0)[0].shape[0] > self.sampleMinSizeVal*10:
+                if onPlate == False: 
+                    onPlate = True
+                    plateStart = i 
                 else: 
-                    trayCount = trayCount+1 
+                    plateCount = plateCount+1 
             else: 
-                if onTray == True and i == self.imageStack.shape[0]-1: 
-                    onTray = False 
-                    self.layers.append(trayStart + (trayCount//2))
-                    trayStart = 0
-                    trayCount = 0
-            tempim = cv.putText(temp,("Checking for objects image " + str(i+1) + ' / ' + str(self.imageStack.shape[0])) + ' ' +str(onTray),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(255,255,55),2) 
-            cv.imshow("Applying stack please wait, we use these images to check for breaks between the removed trays, e.g. all black = no tray .",tempim) 
+                if onPlate == True and i == self.imageStack.shape[0]-1: 
+                    onPlate = False 
+                    self.layers.append(plateStart + (plateCount//2))
+                    plateStart = 0
+                    plateCount = 0
+            tempim = cv.putText(temp,("Checking for objects image " + str(i+1) + ' / ' + str(self.imageStack.shape[0])) + ' ' +str(onPlate),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(255,255,55),2) 
+            cv.imshow("Applying stack please wait, we use these images to check for breaks between the removed plates, e.g. all black = no plate .",tempim) 
             cv.waitKey(1)
-        cv.destroyWindow("Applying stack please wait, we use these images to check for breaks between the removed trays, e.g. all black = no tray .")
+        cv.destroyWindow("Applying stack please wait, we use these images to check for breaks between the removed plates, e.g. all black = no plate .")
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
             self.gridSize.append(( ((temp.shape[0]//10)*9)//2, ((temp.shape[1]//10)*3)//2))
         for i in range(len(self.layers)):
-            listboxValues.insert(END,"tray : "+ str(i+1) + "_" +str(self.layers[i]))
+            listboxValues.insert(END,"plate : "+ str(i+1) + "_" +str(self.layers[i]))
         self.refreshImages()
     
     def AdjustGridCentreY(self, val): 
@@ -213,7 +213,7 @@ class MiTiSegmenter(tk.Tk):
         self.refreshImages()
     
     def minBlobSize(self,val):
-        self.blobMinSizeVal = int(val)
+        self.sampleMinSizeVal = int(val)
     
     def adjustCellBase(self,val): 
         self.cellBase = int(val) 
@@ -234,13 +234,13 @@ class MiTiSegmenter(tk.Tk):
     def adjustGridSizeHor(self, val): 
         for i in range(len(self.layers)):     
             # was self.topbar
-            if self.layers[i] < self.slides[2] + self.traySize and self.layers[i] > self.slides[2] - self.traySize: 
+            if self.layers[i] < self.slides[2] + self.plateSize and self.layers[i] > self.slides[2] - self.plateSize: 
                 self.gridSize[i] = (int(val),self.gridSize[i][1])
         self.refreshImages()
     
     def adjustGridSizeVert(self, val): 
         for i in range(len(self.layers)):     
-            if self.layers[i] < self.slides[2] + self.traySize and self.layers[i] > self.slides[2] - self.traySize:
+            if self.layers[i] < self.slides[2] + self.plateSize and self.layers[i] > self.slides[2] - self.plateSize:
                 self.gridSize[i] = (self.gridSize[i][0],int(val)) 
         self.refreshImages()
         
@@ -257,7 +257,7 @@ class MiTiSegmenter(tk.Tk):
         try:
             #print(folders)
             if folders == "Pro" or folders == "Seg":
-                img = morphology.remove_small_objects(img.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                img = morphology.remove_small_objects(img.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
@@ -329,15 +329,15 @@ class MiTiSegmenter(tk.Tk):
          mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
          os.remove(os.path.expanduser('~')+'/meshFull.obj')'''
          
-    def WriteStacks(self, i, blobName, bounds, imType):
+    def WriteStacks(self, i, sampleName, bounds, imType):
         dirName = "Raw" 
         if imType == 1: #processed 
             dirName = "Pro"
         elif imType == 2: # segmentation  
             dirName = "Seg"
-        if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) + '/' + dirName) == False:
-            os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName) +'/'+dirName)
-        infoFile = open(self.workingPath + '/' + 'blobstacks'+'/' + str(blobName) +'/'+ dirName +'/' + "a_info.info","w") 
+        if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName) + '/' + dirName) == False:
+            os.mkdir(self.workingPath + '/'+"MiTiSegmenter"+ '/' + str(sampleName) +'/'+dirName)
+        infoFile = open(self.workingPath + '/' + 'MiTiSegmenter'+'/' + str(sampleName) +'/'+ dirName +'/' + "a_info.info","w") 
         infoFile.write("pixelsize " + str(self.pixelSizeX)  + " " + str(self.pixelSizeY) +"\n") 
         infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
         p = i
@@ -355,11 +355,9 @@ class MiTiSegmenter(tk.Tk):
                  img  = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
                  img[img >= 1] = 255
              if(self.RawPath):
-                 cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]), img)
+                 cv.imwrite(self.workingPath + '/' + 'MiTiSegmenter'+'/'+ str(sampleName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]), img)
              else:
-                 cv.imwrite(self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
-             #showinfo("box","Raw = " + self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + os.path.basename(self.imagePaths[o]))
-             #showinfo("box","Stack = " +self.workingPath + '/' + 'blobstacks'+'/'+ str(blobName) + '/' + dirName +'/' + dirName + self.imagePaths[o])
+                 cv.imwrite(self.workingPath + '/' + 'MiTiSegmenter'+'/'+ str(sampleName) + '/' + dirName +'/' + dirName + self.imagePaths[o], img)
         infoFile.close()
     
     def exportTiffStacks(self):
@@ -374,16 +372,16 @@ class MiTiSegmenter(tk.Tk):
          generateSeg = int(self.resPopUp.value[3]) 
          if self.RawPath:
              self.ExportUnProcessedStack()
-         if os.path.isdir(self.workingPath + '/'+"blobstacks") == False:
-             os.mkdir(self.workingPath + '/'+"blobstacks")
+         if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter") == False:
+             os.mkdir(self.workingPath + '/'+"MiTiSegmenter")
          shape = self.imageStack.shape
          self.imageStack = None 
          stack = None 
          bounds = [] 
-         blobCenters = [] 
+         sampleCenters = [] 
          gridCenters = [] 
          gridNames = []
-         TrayToBlob = []
+         PlateToBlob = []
          start = 0
          for i in range(shape[0]):
              if self.RawPath:
@@ -408,7 +406,7 @@ class MiTiSegmenter(tk.Tk):
                          stack = np.concatenate((stack, img.reshape((1,img.shape[0],img.shape[1]))))
                          if i == shape[0]-1:
                               stack[stack != 0] = 1 
-                              stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                              stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
                               stack = measure.label(stack)
                               unique = np.unique(stack)
                               for o in range(unique.shape[0]):  
@@ -419,10 +417,10 @@ class MiTiSegmenter(tk.Tk):
                                   Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                                   X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                                   # padd the bound by the down sample rate
-                                  if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                                  if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
                                       print("added padd")
-                                      bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin-(Y)self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
-                                      blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                                      bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
+                                      sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                               stack = None
                               start = 0
              else:
@@ -431,7 +429,7 @@ class MiTiSegmenter(tk.Tk):
                  else: 
                      print("first end " +str(i))
                      stack[stack != 0] = 1 
-                     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.blobMinSizeVal)).astype("uint8")
+                     stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
                      stack = measure.label(stack)
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
@@ -443,39 +441,39 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
-                         print("save blob "+ str(start))
-                         if (np.amax(Z) - np.amin(Z) > self.blobMinSizeVal and np.amax(Y) - np.amin(Y) > self.blobMinSizeVal and np.amax(X) - np.amin(X) > self.blobMinSizeVal):
+                         print("save sample "+ str(start))
+                         if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                             blobCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                             sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
          if len(self.layers) > 0:
-             self.flipTrayVer()
+             self.flipPlateVer()
              for i in range(len(self.layers)): 
-                    topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.trayCSV[i].shape[0]+1,endpoint=True,dtype=('int32'))
-                    bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.trayCSV[i].shape[0]+1,endpoint=True,dtype=('int32'))
-                    for o in range(self.trayCSV[i].shape[0]):
+                    topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.plateCSV[i].shape[0]+1,endpoint=True,dtype=('int32'))
+                    bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.plateCSV[i].shape[0]+1,endpoint=True,dtype=('int32'))
+                    for o in range(self.plateCSV[i].shape[0]):
                         #interpolate between the top and bottom downward looping to fill the gaps 
-                        cols1 = np.linspace(topInterp[o],bottomInterp[o],num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                        cols2 = np.linspace(topInterp[o+1],bottomInterp[o+1],num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))#0+2
-                        for q in range(self.trayCSV[i].shape[1]):#cols1.shape[0]
+                        cols1 = np.linspace(topInterp[o],bottomInterp[o],num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                        cols2 = np.linspace(topInterp[o+1],bottomInterp[o+1],num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))#0+2
+                        for q in range(self.plateCSV[i].shape[1]):#cols1.shape[0]
                             X = (cols1[q][0] + cols2[q][0])//2 
                             Y = (cols1[q][1] + cols2[q][1])//2
                             gridCenters.append([self.layers[i],Y,X])
-                            gridNames.append(self.trayCSV[i][o][q])
-                    # create a colleration between blobs and spread sheet
-             for p in range(len(blobCenters)):
+                            gridNames.append(self.plateCSV[i][o][q])
+                    # create a colleration between samples and spread sheet
+             for p in range(len(sampleCenters)):
                   dist = 999999999
                   refPoint = 0
                   #  loop round and get the lowest distance
                   for o in range(len(gridCenters)): 
                       distance = math.sqrt(
-                                       (blobCenters[p][0]-gridCenters[o][0])*(blobCenters[p][0]-gridCenters[o][0]) +
-                                       (blobCenters[p][1]-gridCenters[o][1])*(blobCenters[p][1]-gridCenters[o][1]) +
-                                       (blobCenters[p][2]-gridCenters[o][2])*(blobCenters[p][2]-gridCenters[o][2]))
+                                       (sampleCenters[p][0]-gridCenters[o][0])*(sampleCenters[p][0]-gridCenters[o][0]) +
+                                       (sampleCenters[p][1]-gridCenters[o][1])*(sampleCenters[p][1]-gridCenters[o][1]) +
+                                       (sampleCenters[p][2]-gridCenters[o][2])*(sampleCenters[p][2]-gridCenters[o][2]))
                       if dist > distance:
                           dist = distance
                           refPoint = o
-                  if (refPoint in TrayToBlob) == False:
+                  if (refPoint in PlateToBlob) == False:
                       indx = 1 
                       gotName = True
                       while(gotName):
@@ -485,35 +483,35 @@ class MiTiSegmenter(tk.Tk):
                               gridNames.append(gridNames[refPoint]+'_'+str(indx)) 
                               refPoint = len(gridNames)-1
                               gotName = False
-                  TrayToBlob.append(refPoint) 
-         self.flipTrayVer()
+                  PlateToBlob.append(refPoint) 
+         self.flipPlateVer()
          print("bounds = " + str(len(bounds)))
          for i in range(len(bounds)):  # was grid names
                  if len(self.layers) > 0:
-                     blobName = gridNames[i]
+                     sampleName = gridNames[i]
                  else: 
-                     blobName = 'blob'+ str(i)
-                 print(self.workingPath + '/'+"blobstacks" + '/' + str(blobName))
-                 if os.path.isdir(self.workingPath + '/'+"blobstacks" + '/' + str(blobName) ) == False:
-                     os.mkdir(self.workingPath + '/'+"blobstacks"+ '/' + str(blobName))  
+                     sampleName = 'sample'+ str(i)
+                 print(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName))
+                 if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName) ) == False:
+                     os.mkdir(self.workingPath + '/'+"MiTiSegmenter"+ '/' + str(sampleName))  
                  if generateRaw == 1: 
-                     self.WriteStacks(i, blobName, bounds, 0)
+                     self.WriteStacks(i, sampleName, bounds, 0)
                  if generatePro == 1: 
-                     self.WriteStacks(i, blobName, bounds, 1)
+                     self.WriteStacks(i, sampleName, bounds, 1)
                  if generateSeg == 1:   
-                     self.WriteStacks(i, blobName, bounds, 2)
+                     self.WriteStacks(i, sampleName, bounds, 2)
 
          if generateMod == 1:
-                  blobs = os.listdir(self.workingPath + '/' + 'blobstacks') 
-                  for i in range(len(blobs)): 
-                      folders = os.listdir(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i])
+                  samples = os.listdir(self.workingPath + '/' + 'MiTiSegmenter') 
+                  for i in range(len(samples)): 
+                      folders = os.listdir(self.workingPath + '/' + 'MiTiSegmenter' + '/' + samples[i])
                       for o in range(len(folders)):  
                           # folder containing the tiff stacks
-                          stk = self.LoadImageStack(self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o]) 
-                          self.generate3DModel(stk,self.workingPath + '/' + 'blobstacks' + '/' + blobs[i]+ '/'+folders[o],folders[0])
+                          stk = self.LoadImageStack(self.workingPath + '/' + 'MiTiSegmenter' + '/' + samples[i]+ '/'+folders[o]) 
+                          self.generate3DModel(stk,self.workingPath + '/' + 'MiTiSegmenter' + '/' + samples[i]+ '/'+folders[o],folders[0])
          if self.RawPath:
                   self.DeleteTempStack()
-         showinfo("Completed processing", "Outputs are saved at "+self.workingPath + '/' + 'blobstacks')
+         showinfo("Completed processing", "Outputs are saved at "+self.workingPath + '/' + 'MiTiSegmenter')
          self.show_frame(StartPage)
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell, final = False):
@@ -536,10 +534,10 @@ class MiTiSegmenter(tk.Tk):
     
     def putGridOnImage(self,temp, val): 
         for i in range(len(self.layers)): 
-            if self.layers[i] < int(val) + self.traySize and self.layers[i] > int(val) - self.traySize:
+            if self.layers[i] < int(val) + self.plateSize and self.layers[i] > int(val) - self.plateSize:
                 #print("need redo scale bars")
-                self.frames[TrayAlign].ScaleGridBarH.set(self.gridSize[i][0]) 
-                self.frames[TrayAlign].ScaleGridBarV.set(self.gridSize[i][1]) 
+                self.frames[PlateAlign].ScaleGridBarH.set(self.gridSize[i][0]) 
+                self.frames[PlateAlign].ScaleGridBarV.set(self.gridSize[i][1]) 
                 halfTemp = (self.gridCenter[0],self.gridCenter[1])
                 self.TL = (halfTemp[0]-self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1])
                 self.TR = (halfTemp[0]+self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1]) 
@@ -549,27 +547,27 @@ class MiTiSegmenter(tk.Tk):
                 self.TR = self.rotate(halfTemp,self.TR,self.gridRotation) 
                 self.BL = self.rotate(halfTemp,self.BL,self.gridRotation)
                 self.BR = self.rotate(halfTemp,self.BR,self.gridRotation) 
-                if i < len(self.trayCSV):
-                    temp = cv.putText(temp,self.trayCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    temp = cv.putText(temp,self.trayCSV[i][0][self.trayCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
-                    temp = cv.putText(temp,self.trayCSV[i][self.trayCSV[i].shape[0]-1][self.trayCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
-                    rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.trayCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
-                    for o in range(self.trayCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
+                if i < len(self.plateCSV):
+                    temp = cv.putText(temp,self.plateCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    temp = cv.putText(temp,self.plateCSV[i][0][self.plateCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+                    temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][self.plateCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
+                    rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
+                    for o in range(self.plateCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
                         pnt1 = (rowsY[o][0],rowsY[o][1])
                         pnt2 = (rowsY[o][2],rowsY[o][3])
                         temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=1)
-                    for o in range(self.trayCSV[i].shape[1]+1):
+                    for o in range(self.plateCSV[i].shape[1]+1):
                         pnt1 = (rowsX[o][0],rowsX[o][1])
                         pnt2 = (rowsX[o][2],rowsX[o][3])
                         temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
                         # get the accrow values for the top row and bottom
-                        topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                        bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.trayCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                        topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                        bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
                     for o in range(topInterp.shape[0]):# down
                         #interpolate between the top and bottom downward looping to fill the gaps 
-                        cols = np.linspace(topInterp[o],bottomInterp[o],num=self.trayCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
+                        cols = np.linspace(topInterp[o],bottomInterp[o],num=self.plateCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
                         for q in range(cols.shape[0]):
                             # draw circle at cols 
                             temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
@@ -820,10 +818,10 @@ class MiTiSegmenter(tk.Tk):
         cv.moveWindow("Y",600,0)
         
         cv.waitKey(1)
-        self.frames[TrayAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
-        self.frames[TrayAlign].MoveGridX.configure(to = self.imgTop.shape[1]*2)
-        self.frames[TrayAlign].MoveGridY.set(self.imgTop.shape[0])
-        self.frames[TrayAlign].MoveGridX.set(self.imgTop.shape[1])
+        self.frames[PlateAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
+        self.frames[PlateAlign].MoveGridX.configure(to = self.imgTop.shape[1]*2)
+        self.frames[PlateAlign].MoveGridY.set(self.imgTop.shape[0])
+        self.frames[PlateAlign].MoveGridX.set(self.imgTop.shape[1])
         
     def updateFront(self, val):
         self.slides[0] = int(val)
