@@ -10,9 +10,9 @@ import math
 import numpy as np  
 import cv2 as cv
 import os
-#import open3d as o3d 
+import open3d as o3d 
 import shutil
-import meshio
+#import meshio
 
 # our file
 from PopUpClasses import *
@@ -173,6 +173,7 @@ class MiTiSegmenter(tk.Tk):
         res = askquestion("Exported", "The plates have been successfully exported as separate image stacks. Would you like to import one now?")
         if res == "yes":
             #self.__init__()
+            cv.destroyAllWindows()
             self.loadImages()
             self.show_frame(StackOptions)
         
@@ -262,10 +263,43 @@ class MiTiSegmenter(tk.Tk):
         if img is None: 
             return 
         try:
-            #print(folders)
-            if folders == "Processed files" or folders == "Segmentation masks":
-                img = morphology.remove_small_objects(img.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
-            verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
+            print(folders)
+            """if folders == "Processed_files" or folders == "Segmentation_masks":
+                #img = morphology.remove_small_objects(img.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
+                # biggest blob only
+                img[img != 0] == 1
+                img = measure.label(img)
+                rand_un = np.unique(img,return_counts=True)
+                max_val = 0
+                for i in range(len(rand_un[0])):
+                    if rand_un[0][i] != 0:
+                        if rand_un[1][i] > max_val:
+                            max_val = rand_un[0][i]
+                img[img != max_val] = 0"""
+            # Pass xyz to Open3D.o3d.geometry.PointCloud and visualize
+            print("make point cloud")
+            pcd = o3d.geometry.PointCloud()
+            print("point cloud obj")
+            pcd.points = o3d.utility.Vector3dVector(np.argwhere(img != 0))
+            print("point cloud object")
+            #o3d.visualization.draw_geometries([pcd])
+            #print("visualise")
+            pcd.estimate_normals()
+            print("get normals")
+            distances = 1# pcd.compute_nearest_neighbor_distance() worked out to 1.000013808319598
+            print("get distance")
+            avg_dist = np.mean(distances)
+            print(avg_dist)
+            radius = 3 * avg_dist
+            print("make mesh")
+            bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
+            print("save mesh")
+            """poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=5, width=0, scale=1, linear_fit=True)[0]
+            bbox = pcd.get_axis_aligned_bounding_box()
+            p_mesh_crop = poisson_mesh.crop(bbox)"""# slow
+            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", poisson_mesh)
+            #o3d.io.write_point_cloud("../../test_data/sync.ply", pcd)
+            """verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
             verts[:,0] = verts[:,0]* self.pixelSizeX # meters to microns 
@@ -288,9 +322,10 @@ class MiTiSegmenter(tk.Tk):
             print(os.path.basename(os.path.dirname(path)))
             #o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
             mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
-            os.remove(os.path.expanduser('~')+'/meshFull.obj')
-        except: 
-            print("file not working properly") 
+            os.remove(os.path.expanduser('~')+'/meshFull.obj')"""
+        except Exception as e: 
+            print("file not working properly")
+            print(e)
 
     def ExportUnProcessedStack(self, processed = False):
         savepath = os.path.join(self.workingPath,"ExportImages")
@@ -310,6 +345,7 @@ class MiTiSegmenter(tk.Tk):
             self.imagePaths.append(savepath+'/'+str(i).zfill(6)+".tiff")
         image.close()
         if processed == True:
+            cv.destroyAllWindows()
             showinfo("Stack Saved!","Unprocessed stack saved to:\n"+savepath)
     
     def DeleteTempStack(self):
@@ -337,11 +373,11 @@ class MiTiSegmenter(tk.Tk):
          os.remove(os.path.expanduser('~')+'/meshFull.obj')'''
          
     def WriteStacks(self, i, sampleName, bounds, imType):
-        dirName = "Raw files" 
+        dirName = "Raw_files" 
         if imType == 1: #processed 
-            dirName = "Processed files"
+            dirName = "Processed_files"
         elif imType == 2: # segmentation  
-            dirName = "Segmentation masks"
+            dirName = "Segmentation_masks"
         if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName) + '/' + dirName) == False:
             os.mkdir(self.workingPath + '/'+"MiTiSegmenter"+ '/' + str(sampleName) +'/'+dirName)
         infoFile = open(self.workingPath + '/' + 'MiTiSegmenter'+'/' + str(sampleName) +'/'+ dirName +'/' + "a_info.info","w") 
@@ -448,7 +484,7 @@ class MiTiSegmenter(tk.Tk):
                          Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
                          X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                          # padd the bound by the down sample rate
-                         print("save sample "+ str(start))
+                         #print("save sample "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
                              bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
                              sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
@@ -492,7 +528,7 @@ class MiTiSegmenter(tk.Tk):
                               gotName = False
                   PlateToBlob.append(refPoint) 
          self.flipPlateVer()
-         print("bounds = " + str(len(bounds)))
+         #print("bounds = " + str(len(bounds)))
          for i in range(len(bounds)):  # was grid names
                  if len(self.layers) > 0:
                      sampleName = gridNames[i]
@@ -519,6 +555,7 @@ class MiTiSegmenter(tk.Tk):
          if self.RawPath:
                   self.DeleteTempStack()
          showinfo("Completed processing", "Outputs are saved at "+self.workingPath + '/' + 'MiTiSegmenter')
+         cv.destroyAllWindows()
          self.show_frame(StartPage)
          
     def ViewImagePreviews(self,img, viewThres, viewCell, downSample, downFactor, thresMax, thresMin, cell, final = False):
@@ -635,6 +672,7 @@ class MiTiSegmenter(tk.Tk):
                 temp = temp.replace('"','') 
                 temp = temp.split(" ") 
                 imagePaths.append(temp[0])
+                #print(temp[1])
                 imagesHeightSlice.append(float(temp[1]))  
         imgstk = None
         if os.path.exists(path + '/' + imagePaths[0]):
@@ -750,6 +788,7 @@ class MiTiSegmenter(tk.Tk):
         self.resPopUp = DownsampleWindow(self.master) 
         self.wait_window(self.resPopUp.top)
         resolution = self.resPopUp.value 
+        print(resolution)
         if len(resolution) < 1: 
             resolution = "1"
             return False

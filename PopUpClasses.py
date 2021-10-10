@@ -55,7 +55,7 @@ class DownsampleWindow(object):
         top.bind('<Return>', self.cleanup)
         top.protocol("WM_DELETE_WINDOW", self.on_closing)
     def on_closing(self):
-            self.value="1"
+            self.value=""
             self.top.destroy()
     def cleanup(self, event=None):
         self.value=self.infoEntry.get()
