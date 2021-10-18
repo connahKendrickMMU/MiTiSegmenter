@@ -288,7 +288,7 @@ class MiTiSegmenter(tk.Tk):
             print("get normals")
             distances = 1# pcd.compute_nearest_neighbor_distance() worked out to 1.000013808319598
             print("get distance")
-            avg_dist = np.mean(distances)
+            avg_dist = distances#np.mean(distances)
             print(avg_dist)
             radius = 3 * avg_dist
             print("make mesh")
