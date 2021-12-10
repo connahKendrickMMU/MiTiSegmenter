@@ -95,7 +95,7 @@ class GenerateTiffStackWindow(object):
         self.value = str(self.generateRawTiffs.get()) + ";"+ str(self.generateProcessedTiffs.get()) + ";" + str(self.generate3DModels.get())+ ";" + str(self.generateSegmentedTiffs.get()) 
         self.top.destroy()
         
-class GetTrayCSVs(object): 
+class GetPlateCSVs(object): 
     def __init__(self,master,trayCount):
         top=self.top=Toplevel(master)
         self.infoLabel=Label(top,text="Select directories for each plates csv, or click Ok to leave blank")

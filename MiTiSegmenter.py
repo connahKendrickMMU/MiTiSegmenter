@@ -193,11 +193,17 @@ class MiTiSegmenter(tk.Tk):
                 else: 
                     plateCount = plateCount+1 
             else: 
-                if onPlate == True and i == self.imageStack.shape[0]-1: 
+                if onPlate == True: 
                     onPlate = False 
                     self.layers.append(plateStart + (plateCount//2))
                     plateStart = 0
                     plateCount = 0
+                if(i == self.imageStack.shape[0]):
+                    if(onPlate == True):
+                        onPlate = False 
+                        self.layers.append(plateStart + (plateCount//2))
+                        plateStart = 0
+                        plateCount = 0
             tempim = cv.putText(temp,("Checking for objects image " + str(i+1) + ' / ' + str(self.imageStack.shape[0])) + ' ' +str(onPlate),(0,30),cv.FONT_HERSHEY_SIMPLEX,1,(255,255,55),2) 
             cv.imshow("Applying stack please wait, we use these images to check for breaks between the removed plates, e.g. all black = no plate .",tempim) 
             cv.waitKey(1)
