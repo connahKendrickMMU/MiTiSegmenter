@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(['MiTiSegmenter.py'],
-             pathex=['C:\\Users\\conna\\Documents\\GitHub\\MiTiSegmenter'],
+             pathex=[],
              binaries=[],
              datas=[],
              hiddenimports=[],

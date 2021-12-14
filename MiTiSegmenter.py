@@ -249,13 +249,13 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):     
             # was self.topbar
             if self.layers[i] < self.slides[2] + self.plateSize and self.layers[i] > self.slides[2] - self.plateSize: 
-                self.gridSize[i] = (int(val),self.gridSize[i][1])
+                self.gridSize[0] = (int(val),self.gridSize[0][1])
         self.refreshImages()
     
     def adjustGridSizeVert(self, val): 
         for i in range(len(self.layers)):     
             if self.layers[i] < self.slides[2] + self.plateSize and self.layers[i] > self.slides[2] - self.plateSize:
-                self.gridSize[i] = (self.gridSize[i][0],int(val)) 
+                self.gridSize[0] = (self.gridSize[0][0],int(val)) 
         self.refreshImages()
         
     def refreshImages(self):  
@@ -283,7 +283,7 @@ class MiTiSegmenter(tk.Tk):
                             max_val = rand_un[0][i]
                 img[img != max_val] = 0"""
             # Pass xyz to Open3D.o3d.geometry.PointCloud and visualize
-            print("make point cloud")
+            """print("make point cloud")
             pcd = o3d.geometry.PointCloud()
             print("point cloud obj")
             pcd.points = o3d.utility.Vector3dVector(np.argwhere(img != 0))
@@ -300,12 +300,9 @@ class MiTiSegmenter(tk.Tk):
             print("make mesh")
             bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
             print("save mesh")
-            """poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=5, width=0, scale=1, linear_fit=True)[0]
-            bbox = pcd.get_axis_aligned_bounding_box()
-            p_mesh_crop = poisson_mesh.crop(bbox)"""# slow
-            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", poisson_mesh)
+            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", poisson_mesh)"""
             #o3d.io.write_point_cloud("../../test_data/sync.ply", pcd)
-            """verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
+            verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
             verts[:,0] = verts[:,0]* self.pixelSizeX # meters to microns 
@@ -323,12 +320,12 @@ class MiTiSegmenter(tk.Tk):
             
             thefile.close()   
              
-            #pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
-            mesh = meshio.read(os.path.expanduser('~')+'/meshFull.obj')
+            pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj')    
+            #mesh = meshio.read(os.path.expanduser('~')+'/meshFull.obj')
             print(os.path.basename(os.path.dirname(path)))
-            #o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
-            mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
-            os.remove(os.path.expanduser('~')+'/meshFull.obj')"""
+            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", pcd_load)  
+            #mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
+            os.remove(os.path.expanduser('~')+'/meshFull.obj')
         except Exception as e: 
             print("file not working properly")
             print(e)
@@ -358,25 +355,7 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.imagePaths)):
             os.remove(self.imageOaths[i])
         self.imagePaths = []
-        
-    '''def makeAllPointCloud(self):  
-         if self.imageStack is None: 
-             return
-         verts, faces, normals, values = measure.marching_cubes_lewiner((self.imageStack != 0), 0)#fit this into the model from open3d
-         faces=faces+1
-         thefile = open(os.path.expanduser('~')+'/meshFull.obj', 'w')
-         for item in verts:
-           thefile.write("v {0} {1} {2}\n".format(item[0]/self.downsampleFactor,item[1],item[2]))
-         for item in normals:
-           thefile.write("vn {0} {1} {2}\n".format(item[0],item[1],item[2]))
-         for item in faces:
-           thefile.write("f {0}//{0} {1}//{1} {2}//{2}\n".format(item[0],item[1],item[2]))  
-         thefile.close()
-         #pcd_load = o3d.io.read_triangle_mesh(os.path.expanduser('~')+'/meshFull.obj') 
-         #o3d.io.write_triangle_mesh(os.path.expanduser('~')+'/sync.ply', pcd_load)  
-         mesh = meshio.read(os.path.expanduser('~')+'/meshFull.obj')
-         mesh.write(path+'/'+os.path.basename(os.path.dirname(path))+".ply")
-         os.remove(os.path.expanduser('~')+'/meshFull.obj')'''
+    
          
     def WriteStacks(self, i, sampleName, bounds, imType):
         dirName = "Raw_files" 
@@ -583,44 +562,48 @@ class MiTiSegmenter(tk.Tk):
         return int(qx),int(qy)
     
     def putGridOnImage(self,temp, val): 
-        for i in range(len(self.layers)): 
-            if self.layers[i] < int(val) + self.plateSize and self.layers[i] > int(val) - self.plateSize:
-                #print("need redo scale bars")
-                self.frames[PlateAlign].ScaleGridBarH.set(self.gridSize[i][0]) 
-                self.frames[PlateAlign].ScaleGridBarV.set(self.gridSize[i][1]) 
-                halfTemp = (self.gridCenter[0],self.gridCenter[1])
-                self.TL = (halfTemp[0]-self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1])
-                self.TR = (halfTemp[0]+self.gridSize[i][0],halfTemp[1]-self.gridSize[i][1]) 
-                self.BL = (halfTemp[0]-self.gridSize[i][0],halfTemp[1]+self.gridSize[i][1])
-                self.BR = (halfTemp[0]+self.gridSize[i][0],halfTemp[1]+self.gridSize[i][1])
-                self.TL = self.rotate(halfTemp,self.TL,self.gridRotation) 
-                self.TR = self.rotate(halfTemp,self.TR,self.gridRotation) 
-                self.BL = self.rotate(halfTemp,self.BL,self.gridRotation)
-                self.BR = self.rotate(halfTemp,self.BR,self.gridRotation) 
-                if i < len(self.plateCSV):
-                    temp = cv.putText(temp,self.plateCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    temp = cv.putText(temp,self.plateCSV[i][0][self.plateCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
-                    temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][self.plateCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-                    rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
-                    rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
-                    for o in range(self.plateCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
-                        pnt1 = (rowsY[o][0],rowsY[o][1])
-                        pnt2 = (rowsY[o][2],rowsY[o][3])
-                        temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=1)
-                    for o in range(self.plateCSV[i].shape[1]+1):
-                        pnt1 = (rowsX[o][0],rowsX[o][1])
-                        pnt2 = (rowsX[o][2],rowsX[o][3])
-                        temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
-                        # get the accrow values for the top row and bottom
-                        topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                        bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
-                    for o in range(topInterp.shape[0]):# down
-                        #interpolate between the top and bottom downward looping to fill the gaps 
-                        cols = np.linspace(topInterp[o],bottomInterp[o],num=self.plateCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
-                        for q in range(cols.shape[0]):
-                            # draw circle at cols 
-                            temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
+        try:
+            for i in range(len(self.layers)): 
+                if self.layers[i] < int(val) + self.plateSize and self.layers[i] > int(val) - self.plateSize:
+                    #print("need redo scale bars")
+                    self.frames[PlateAlign].ScaleGridBarH.set(self.gridSize[0][0]) 
+                    self.frames[PlateAlign].ScaleGridBarV.set(self.gridSize[0][1]) 
+                    halfTemp = (self.gridCenter[0],self.gridCenter[1])
+                    self.TL = (halfTemp[0]-self.gridSize[0][0],halfTemp[1]-self.gridSize[0][1])
+                    self.TR = (halfTemp[0]+self.gridSize[0][0],halfTemp[1]-self.gridSize[0][1]) 
+                    self.BL = (halfTemp[0]-self.gridSize[0][0],halfTemp[1]+self.gridSize[0][1])
+                    self.BR = (halfTemp[0]+self.gridSize[0][0],halfTemp[1]+self.gridSize[0][1])
+                    self.TL = self.rotate(halfTemp,self.TL,self.gridRotation) 
+                    self.TR = self.rotate(halfTemp,self.TR,self.gridRotation) 
+                    self.BL = self.rotate(halfTemp,self.BL,self.gridRotation)
+                    self.BR = self.rotate(halfTemp,self.BR,self.gridRotation) 
+                    if i < len(self.plateCSV):
+                        temp = cv.putText(temp,self.plateCSV[i][0][0],self.TL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                        temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][0],self.BL,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                        temp = cv.putText(temp,self.plateCSV[i][0][self.plateCSV[i].shape[1]-1],self.TR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2) 
+                        temp = cv.putText(temp,self.plateCSV[i][self.plateCSV[i].shape[0]-1][self.plateCSV[i].shape[1]-1],self.BR,cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                        rowsY = np.linspace((self.TL[0],self.TL[1],self.TR[0],self.TR[1]),(self.BL[0],self.BL[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[0]+1, endpoint=True,dtype=('int32')) 
+                        rowsX = np.linspace((self.TL[0],self.TL[1],self.BL[0],self.BL[1]),(self.TR[0],self.TR[1],self.BR[0],self.BR[1]), num=self.plateCSV[i].shape[1]+1, endpoint=True,dtype=('int32')) 
+                        for o in range(self.plateCSV[i].shape[0]+ 1): # creates the rows + 2 as we need the number of blocks
+                            pnt1 = (rowsY[o][0],rowsY[o][1])
+                            pnt2 = (rowsY[o][2],rowsY[o][3])
+                            temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=1)
+                        for o in range(self.plateCSV[i].shape[1]+1):
+                            pnt1 = (rowsX[o][0],rowsX[o][1])
+                            pnt2 = (rowsX[o][2],rowsX[o][3])
+                            temp = cv.line(temp,pt1=pnt1,pt2=pnt2,color=(0,255,0),thickness=3) 
+                            # get the accrow values for the top row and bottom
+                            topInterp = np.linspace((self.TL[0],self.TL[1]),(self.TR[0],self.TR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                            bottomInterp = np.linspace((self.BL[0],self.BL[1]),(self.BR[0],self.BR[1]),num=self.plateCSV[i].shape[1]+1,endpoint=True,dtype=('int32'))
+                        for o in range(topInterp.shape[0]):# down
+                            #interpolate between the top and bottom downward looping to fill the gaps 
+                            cols = np.linspace(topInterp[o],bottomInterp[o],num=self.plateCSV[i].shape[0]+1,endpoint=True,dtype=('int32')) #inter top i and bottom i by the shape 
+                            for q in range(cols.shape[0]):
+                                # draw circle at cols 
+                                temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
+        except Exception as e: 
+            print("file not working properly")
+            print(e)
         return temp
 
     def generateInfoFile(self):  
