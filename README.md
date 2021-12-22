@@ -31,8 +31,8 @@ The code requires:
 We use spyder with anaconda to launch the code.
 
 ## Using MiTiSegmenter
-
-Using MiTiSegmenter should be straightforward when following the workflow provided. This guide provides step-by-step instructions on using the software as intended. We provide an accompanying sample dataset as an example of array-based microCT data, which can be found at [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
+Please follow the video guide at: https://mmutube.mmu.ac.uk/media/MiTiSegGuide/1_kha8y1kl
+<!--Using MiTiSegmenter should be straightforward when following the workflow provided. This guide provides step-by-step instructions on using the software as intended. We provide an accompanying sample dataset as an example of array-based microCT data, which can be found at [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
 
 Since the easing of lockdown in the UK has begun, we have manage to get volunteers to tes the software this, has lead to improvements to the GUI  the guide below still follows the same steps, with the removal of having to press some buttons. As we are updating the GUI at a fast pace we recommend looking here: https://www.dropbox.com/s/hw9d8vre3dg12de/MiTiSegmentatorGuide.mp4?dl=0 for a step by step video.once all the tester are happy, we'll redo the whole guide, new videos are made with each update.
 
@@ -178,3 +178,4 @@ We have several plans to improve the software in future versions. We welcome any
 * Add an option to auto tray separation. 
 * Improved segmentation tools to reduce user intervention. 
 * Add multi-colour to the blobs.
+-->
