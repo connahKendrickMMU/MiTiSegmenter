@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import * 
 from tkinter.messagebox import showinfo, askquestion
-from skimage import measure, morphology
+from skimage import morphology#measure,
+from dask_image import ndmeasure
 import math
 import numpy as np  
 import cv2 as cv
@@ -435,7 +436,16 @@ class MiTiSegmenter(tk.Tk):
                          if i == shape[0]-1:
                               stack[stack != 0] = 1 
                               stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
-                              stack = measure.label(stack)
+                              #stack = measure.label(stack)
+                              # must be bigger then a 3*3 matrix to do labeling
+                              if len(stack.shape) < 3: 
+                                stack = None
+                                continue
+                              elif stack.shape[2] < 4 or stack.shape[1] < 4 or stack.shape[0] < 4:
+                                stack = None
+                                continue
+                              #stack = measure.label(stack)
+                              stack = ndmeasure.label(stack,np.ones((3,3,3)))[0].compute()
                               unique = np.unique(stack)
                               for o in range(unique.shape[0]):  
                                   if unique[o] == 0: # background
@@ -458,7 +468,16 @@ class MiTiSegmenter(tk.Tk):
                      print("first end " +str(i))
                      stack[stack != 0] = 1 
                      stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
-                     stack = measure.label(stack)
+                     #stack = measure.label(stack)
+                     # must be bigger then a 3*3 matrix to do labeling
+                     if len(stack.shape) < 3: 
+                        stack = None
+                        continue
+                     elif stack.shape[2] < 4 or stack.shape[1] < 4 or stack.shape[0] < 4:
+                        stack = None
+                        continue
+                     #stack = measure.label(stack)
+                     stack = ndmeasure.label(stack,np.ones((3,3,3)))[0].compute()
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
                          if unique[o] == 0: # background
@@ -658,11 +677,10 @@ class MiTiSegmenter(tk.Tk):
                 offsetX = float(temp[1])
                 offsetY = float(temp[2])
             elif temp.startswith('"'):
-                temp = temp.replace('"','') 
-                temp = temp.split(" ") 
-                imagePaths.append(temp[0])
-                #print(temp[1])
-                imagesHeightSlice.append(float(temp[1]))  
+                temp = temp.split('"') 
+                #temp = temp.replace('"','') 
+                self.imagePaths.append(temp[1].replace('"',''))
+                self.imagesHeightSlice.append(float(temp[2])) 
         imgstk = None
         if os.path.exists(path + '/' + imagePaths[0]):
             temp = cv.imread(path + '/' + imagePaths[0],0).astype("uint8")   
@@ -804,10 +822,10 @@ class MiTiSegmenter(tk.Tk):
                 self.offsetX = float(temp[1])
                 self.offsetY = float(temp[2])
             elif temp.startswith('"'):
-                temp = temp.replace('"','') 
-                temp = temp.split(" ") 
-                self.imagePaths.append(temp[0])
-                self.imagesHeightSlice.append(float(temp[1])) 
+                temp = temp.split('"') 
+                #temp = temp.replace('"','') 
+                self.imagePaths.append(temp[1].replace('"',''))
+                self.imagesHeightSlice.append(float(temp[2])) 
         self.pixelSizeZ = self.imagesHeightSlice[1]
         temp = cv.imread(path + '/' + self.imagePaths[0],0).astype("uint8")   
         self.imageStack = np.zeros((len(self.imagePaths),temp.shape[0]//self.downsampleFactor,temp.shape[1]//self.downsampleFactor)).astype("uint8")
