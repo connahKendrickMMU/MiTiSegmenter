@@ -681,7 +681,10 @@ class MiTiSegmenter(tk.Tk):
                 #temp = temp.replace('"','') 
                 self.imagePaths.append(temp[1].replace('"',''))
                 self.imagesHeightSlice.append(float(temp[2])) 
-        imgstk = None
+        #imgstk = None
+        if len(imagePaths) == 0:
+            print("Empty Stack")
+            return imgstk
         if os.path.exists(path + '/' + imagePaths[0]):
             temp = cv.imread(path + '/' + imagePaths[0],0).astype("uint8")   
             imgstk = np.zeros((len(imagePaths),temp.shape[0],temp.shape[1])).astype("uint8")
