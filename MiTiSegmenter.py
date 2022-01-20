@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import * 
 from tkinter.messagebox import showinfo, askquestion
-from skimage import morphology#measure,
+from skimage import measure, morphology#
 from dask_image import ndmeasure
 import math
 import numpy as np  
@@ -665,7 +665,6 @@ class MiTiSegmenter(tk.Tk):
         pixelSizeZ = 0
         offsetX = 0 
         offsetY = 0 
-        
         for i in range(len(info)): 
             temp = info.pop(0)
             if temp.startswith('p'): 
@@ -679,8 +678,8 @@ class MiTiSegmenter(tk.Tk):
             elif temp.startswith('"'):
                 temp = temp.split('"') 
                 #temp = temp.replace('"','') 
-                self.imagePaths.append(temp[1].replace('"',''))
-                self.imagesHeightSlice.append(float(temp[2])) 
+                imagePaths.append(temp[1].replace('"',''))
+                imagesHeightSlice.append(float(temp[2])) 
         #imgstk = None
         if len(imagePaths) == 0:
             print("Empty Stack")
