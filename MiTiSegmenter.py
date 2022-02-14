@@ -13,6 +13,7 @@ import cv2 as cv
 import os
 import open3d as o3d 
 import shutil
+import glob 
 #import meshio
 
 # our file
@@ -633,12 +634,16 @@ class MiTiSegmenter(tk.Tk):
             print("do error")
             return
         path = filedialog.askdirectory(title = "select image dir")  
-        paths = os.listdir(path)
+        print(path)
+        paths = sorted(glob.glob(path+"/*"))#os.listdir(path)
+        print(paths)
+        print(len(paths))
         infoFile = open(path+"/a_info.info","w") 
         infoFile.write("pixelsize " + resolution[0] + " " + resolution[1]+"\n") 
         infoFile.write("offset 0 0\n") 
         for i in range(len(paths)):
-            if (paths[i].lower().endswith("tif") or paths[i].lower().endswith("jpg") or paths[i].lower().endswith("png")):
+            paths[i] = paths[i].split("\\")[1]
+            if (paths[i].lower().endswith("tif") or paths[i].lower().endswith("jpg") or paths[i].lower().endswith("png") or paths[i].lower().endswith("tiff")):
                 infoFile.write('"' + paths[i]+'" ' + str(float(resolution[2])*i) +"\n") 
         infoFile.close()
     
