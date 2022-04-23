@@ -1,3 +1,6 @@
 Merge LoadImageStack and LoadImages, Stack version if for the final exportation stage.
 Crash error after applying plate and scrolling the top-to-bottom view
 plate line sometimes black (multi tray), check colour space
+Some say the CSV window doesn't always appear, test 
+Handle Error when a user cancels on the CSV load
+If could store the first and last value when plating, could have grid appear over full image

@@ -96,7 +96,7 @@ class MiTiSegmenter(tk.Tk):
                 
     def loadCSV(self): 
         if len(self.layers) == 0:
-            print("no layers created")
+            showinfo("No Layers","to import csvs you need to add layers, to allow the system to know how many files to import.")
         self.resPlatePopUp = GetPlateCSVs(self.master,self.layers) 
         self.wait_window(self.resPlatePopUp.top)  
         self.resPlatePopUp = self.resPlatePopUp.value
@@ -218,7 +218,7 @@ class MiTiSegmenter(tk.Tk):
         self.gridSize = []
         temp = self.imageStack[0,:,:].astype('uint8')
         for i in range(len(self.layers)): 
-            self.gridSize.append(( ((temp.shape[0]//10)*9)//2, ((temp.shape[1]//10)*3)//2))
+            self.gridSize.append((temp.shape[0]//2,temp.shape[1]//2))# was this(( ((temp.shape[0]//10)*9)//2, ((temp.shape[1]//10)*3)//2))
         for i in range(len(self.layers)):
             listboxValues.insert(END,"plate : "+ str(i+1) + "_" +str(self.layers[i]))
         self.refreshImages()
@@ -462,9 +462,24 @@ class MiTiSegmenter(tk.Tk):
                                   X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                                   # padd the bound by the down sample rate
                                   if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
-                                      print("added padd")
-                                      bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
+                                      print("added padd - check this works")
+                                      # change to percentage 
+                                      Zp = int(((np.amax(Z) - np.amin(Z))*0.05)/2)
+                                      Zmin = np.amin(Z) - ZP
+                                      Zmax = np.amax(Z) + ZP
+                                      
+                                      Yp = int(((np.amax(Y) - np.amin(Y))*0.05)/2)
+                                      Ymin = np.amin(Y) - YP
+                                      Ymax = np.amax(Y) + YP
+                                      
+                                      Xp = int(((np.amax(X) - np.amin(X))*0.05)/2)
+                                      Xmin = np.amin(X) - XP
+                                      Xmax = np.amax(X) + XP
+                                      bounds.append((Zmin+start,Zmax+start,Ymin+start,Ymax+start,Xmin+start,Xmax+start))
+                                      #bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                                       sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                                  else:
+                                      print("Error in exportation, your image is on the bounds")
                               stack = None
                               start = 0
              else:
@@ -627,7 +642,7 @@ class MiTiSegmenter(tk.Tk):
                                 # draw circle at cols 
                                 temp = cv.circle(temp,(cols[q][0],cols[q][1]),2,(255,0,0)) 
         except Exception as e: 
-            print("file not working properly")
+            print("Error cannot place grid on image")
             print(e)
         return temp
 
