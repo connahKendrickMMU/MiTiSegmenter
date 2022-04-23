@@ -1,4 +1,4 @@
-
+*.pyc
 *.spec
 \dist
 \build
