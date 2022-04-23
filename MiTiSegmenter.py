@@ -121,12 +121,17 @@ class MiTiSegmenter(tk.Tk):
         listbox.delete(0,listbox.size())
         items = list(items)
         ints = []
+        self.layers.append(self.slides[2])
+        #print(self.layers)
+        
+        # place sorted values back into the list box
         for i in range(len(items)):
             if int(items[i].split("_")[1]) not in ints:
                 ints.append(int(items[i].split("_")[1]))
         while(len(ints)>0):
             listbox.insert(END,"plate part: " + "_" +str(min(ints)))
             ints.remove(min(ints))
+        self.refreshImages()
         
     def exportPlates(self, listbox): 
         items = listbox.get(0, END)
@@ -631,13 +636,10 @@ class MiTiSegmenter(tk.Tk):
         self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 3: 
-            print("do error")
-            return
+            print("Error resolution in info file incorrect")
+            return False
         path = filedialog.askdirectory(title = "select image dir")  
-        print(path)
         paths = sorted(glob.glob(path+"/*"))#os.listdir(path)
-        print(paths)
-        print(len(paths))
         infoFile = open(path+"/a_info.info","w") 
         infoFile.write("pixelsize " + resolution[0] + " " + resolution[1]+"\n") 
         infoFile.write("offset 0 0\n") 
@@ -646,18 +648,27 @@ class MiTiSegmenter(tk.Tk):
             if (paths[i].lower().endswith("tif") or paths[i].lower().endswith("jpg") or paths[i].lower().endswith("png") or paths[i].lower().endswith("tiff")):
                 infoFile.write('"' + paths[i]+'" ' + str(float(resolution[2])*i) +"\n") 
         infoFile.close()
+        return True
     
+    # this one is used during export should modify to use the main
     def LoadImageStack(self, path):
         imgstk = None 
         paths = os.listdir(path) 
-        infoFile = ""
+        infoFile = "" 
+        HasCorrectFiles = False
         if len(paths) < 1: 
             showinfo("File Directory empty",path+ " : contains no files!")
             return imgstk
         for i in range(len(paths)):
             if paths[i].endswith(".info"): 
                 infoFile = paths[i] 
-                break 
+            elif (paths[i].endswith(".tif") or paths[i].endswith(".png") or paths[i].endswith(".tiff") or paths[i].endswith(".tiff")):
+                HasCorrectFiles = True
+        if HasCorrectFiles == False: 
+            showinfo("Directory contains no images, select folder containing images of supported files (.jpg,.png,.tif,.tiff)\n check console to see found files")
+            for path in paths:
+                print(path)
+            return
         if infoFile == "":
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner!")
             return imgstk
@@ -696,7 +707,8 @@ class MiTiSegmenter(tk.Tk):
                 imgstk[i] = cv.imread(path + '/' + imagePaths[i],0).astype("uint8")
         else: 
             imgstk = np.zeros((10,10,10)) 
-            print("this is an error")
+            print("Error in LoadImageStack, path does not exist. " + path + '/' + imagePaths[0])
+            return imgstk
         pixelSizeZ = imagesHeightSlice[1]
         return imgstk
         
@@ -782,7 +794,7 @@ class MiTiSegmenter(tk.Tk):
         paths = os.listdir(path) 
         self.workingPath = path
         infoFile = ""
-        
+        HasCorrectFiles = False
         if len(paths) < 1: 
             showinfo("File Directory empty",path+ " : contains no files!")
             return False
@@ -790,19 +802,28 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(paths)):
             if paths[i].endswith(".info"): 
                 infoFile = paths[i] 
-                break 
+            elif (paths[i].endswith(".tif") or paths[i].endswith(".png") or paths[i].endswith(".tiff") or paths[i].endswith(".tiff")):
+                HasCorrectFiles = True
+                
+        if HasCorrectFiles == False: 
+            showinfo("Directory contains no images","select folder containing images of supported files (.jpg,.png,.tif,.tiff). Check console to see found files and folders.")
+            for path in paths:
+                print(path)
+            return
         
         if infoFile == "":
             showinfo("No Scanner info file", path + " : contains no .info file from the scanner! Let's create one now, then reload the stack. "+
                     "An info file contains the information used to rebuild the scan images, so both the image names and the real-world distance"+
                     " between each scan. It also holds how big the width and height of each pixel is. Using this, we can reconstruct the scan and build a to-scale 3D model.")
-            self.generateInfoFile()
-            return self.loadImages(path=path)
+            if(self.generateInfoFile() == True):
+                return self.loadImages(path=path)
+            else:
+                return
         
         self.resPopUp = DownsampleWindow(self.master) 
         self.wait_window(self.resPopUp.top)
         resolution = self.resPopUp.value 
-        print(resolution)
+        print("File resolution " + str(resolution))
         if len(resolution) < 1: 
             resolution = "1"
             return False
@@ -857,12 +878,12 @@ class MiTiSegmenter(tk.Tk):
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         self.imgSide = self.imageStack[:,0,:]
         self.imgFront = self.imageStack[:,:,0] 
-        cv.namedWindow("Z",cv.WINDOW_KEEPRATIO)
+        cv.namedWindow("Y",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgFront.shape[1]
-        cv.resizeWindow("Z", 300,int(self.imgFront.shape[0]*r));
-        cv.createTrackbar("image", "Z" , self.imageStack.shape[2]//2, self.imageStack.shape[2]-1, self.updateFront) 
+        cv.resizeWindow("Y", 300,int(self.imgFront.shape[0]*r));
+        cv.createTrackbar("image", "Y" , self.imageStack.shape[2]//2, self.imageStack.shape[2]-1, self.updateFront) 
         self.updateFront(self.imageStack.shape[2]//2)
-        cv.moveWindow("Z",0,0)
+        cv.moveWindow("Y",0,0)
         
         cv.namedWindow("X",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgSide.shape[1]
@@ -871,12 +892,12 @@ class MiTiSegmenter(tk.Tk):
         self.updateSide(self.imageStack.shape[1]//2)
         cv.moveWindow("X",300,0)
         
-        cv.namedWindow("Y",cv.WINDOW_KEEPRATIO)
+        cv.namedWindow("Z",cv.WINDOW_KEEPRATIO)
         r = 300/self.imgTop.shape[1]
-        cv.resizeWindow("Y", 300,int(self.imgTop.shape[0]*r));
-        cv.createTrackbar("image", "Y" , self.imageStack.shape[0]//2, self.imageStack.shape[0]-1, self.updateTop) 
+        cv.resizeWindow("Z", 300,int(self.imgTop.shape[0]*r));
+        cv.createTrackbar("image", "Z" , self.imageStack.shape[0]//2, self.imageStack.shape[0]-1, self.updateTop) 
         self.updateTop(self.imageStack.shape[0]//2)
-        cv.moveWindow("Y",600,0)
+        cv.moveWindow("Z",600,0)
         
         cv.waitKey(1)
         self.frames[PlateAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
@@ -891,7 +912,7 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             temp = cv.line(temp,pt1=(0,self.layers[i]),pt2=(temp.shape[1],self.layers[i]),color=(255,255,0),thickness=5) 
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
-        cv.imshow("Z",temp)
+        cv.imshow("Y",temp)
         cv.waitKey(1)
         
     def updateSide(self, val):
@@ -907,7 +928,7 @@ class MiTiSegmenter(tk.Tk):
         temp = cv.cvtColor(temp,cv.COLOR_GRAY2RGB)
         temp = self.ViewImagePreviews(temp,1,1,True,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)#self.ViewImagePreviews(temp,self.viewThresholdVar.get(),self.viewCellVar.get(),False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
         temp = self.putGridOnImage(temp,int(val))
-        cv.imshow("Y",temp)
+        cv.imshow("Z",temp)
         cv.waitKey(1)
 
 app = MiTiSegmenter() 

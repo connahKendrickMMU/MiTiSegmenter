@@ -172,8 +172,9 @@ class PlateStack(tk.Frame):
     def deletePlate(self,listboxValues, controller): 
         if listboxValues.size() > 0:
             #controller.layers.pop(listboxValues.curselection()[0])
-            listboxValues.delete(listboxValues.curselection()[0])
-            controller.refreshImages
+            controller.layers.pop(listboxValues.curselection()[0])
+            listboxValues.delete(listboxValues.curselection()[0]) 
+            controller.refreshImages()
         
 class PlateAlign(tk.Frame):  
     def __init__(self, parent, controller): 

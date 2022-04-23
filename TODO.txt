@@ -1,0 +1,3 @@
+Merge LoadImageStack and LoadImages, Stack version if for the final exportation stage.
+Crash error after applying plate and scrolling the top-to-bottom view
+plate line sometimes black (multi tray), check colour space
