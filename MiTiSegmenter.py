@@ -60,11 +60,17 @@ class MiTiSegmenter(tk.Tk):
         container.grid_rowconfigure(0, weight = 1) 
         container.grid_columnconfigure(0, weight = 1) 
         self.frames = {}   
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         for F in (StartPage, StackOptions, SeparatePlates, ThresAndCellStack, LabelImages, PlateStack,  PlateAlign, Export):
             frame = F(container, self) 
             self.frames[F] = frame  
             frame.grid(row = 0, column = 0, sticky ="nsew") 
         self.show_frame(StartPage) 
+    
+    # clear cv and destory self
+    def on_close(self):
+        cv.destroyAllWindows()
+        self.destroy()
     
     def show_frame(self, cont): 
         frame = self.frames[cont] 
@@ -112,6 +118,8 @@ class MiTiSegmenter(tk.Tk):
         for i in range(len(self.layers)):
             # setup base layers
             self.putGridOnImage(np.zeros((self.imageStack.shape[1],self.imageStack.shape[2])), self.layers[i])
+            self.updateTop(self.layers[i])
+            cv.setTrackPos("image", "Z" ,self.layers[i])
         self.refreshImages()
          
     def addPlate(self, listbox):
