@@ -371,7 +371,9 @@ class MiTiSegmenter(tk.Tk):
             os.remove(self.imageOaths[i])
         self.imagePaths = []
     
-         
+    '''
+    Write stacks outputs all the tiff stacks into the folders
+    '''
     def WriteStacks(self, i, sampleName, bounds, imType):
         dirName = "Raw_files" 
         if imType == 1: #processed 
@@ -385,6 +387,9 @@ class MiTiSegmenter(tk.Tk):
         infoFile.write("offset " + str(self.offsetX) + " " + str(self.offsetY) + "\n")   
         p = i
         for o in range(bounds[i][0],bounds[i][1]+1):
+             # due to the padding there is a risk of going out of bounds
+             if( o < 0 or o >= len(self.imagePaths)):
+                 continue
              infoFile.write('"' + dirName + self.imagePaths[o] +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[bounds[i][0]]) +"\n") 
              img = None
              if self.RawPath:
@@ -437,6 +442,9 @@ class MiTiSegmenter(tk.Tk):
              cv.waitKey(1)
              
              img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
+             '''
+             what is the first part of this doing
+             '''
              if img.max() > 0: 
                  if stack is None: 
                      start = i
@@ -473,16 +481,16 @@ class MiTiSegmenter(tk.Tk):
                                       print("added padd - check this works")
                                       # change to percentage 
                                       Zp = int(((np.amax(Z) - np.amin(Z))*0.05)/2)
-                                      Zmin = np.amin(Z) - ZP
-                                      Zmax = np.amax(Z) + ZP
+                                      Zmin = np.amin(Z) - Zp
+                                      Zmax = np.amax(Z) + Zp
                                       
                                       Yp = int(((np.amax(Y) - np.amin(Y))*0.05)/2)
-                                      Ymin = np.amin(Y) - YP
-                                      Ymax = np.amax(Y) + YP
+                                      Ymin = np.amin(Y) - Yp
+                                      Ymax = np.amax(Y) + Yp
                                       
                                       Xp = int(((np.amax(X) - np.amin(X))*0.05)/2)
-                                      Xmin = np.amin(X) - XP
-                                      Xmax = np.amax(X) + XP
+                                      Xmin = np.amin(X) - Xp
+                                      Xmax = np.amax(X) + Xp
                                       bounds.append((Zmin+start,Zmax+start,Ymin+start,Ymax+start,Xmin+start,Xmax+start))
                                       #bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                                       sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
@@ -519,8 +527,24 @@ class MiTiSegmenter(tk.Tk):
                          # padd the bound by the down sample rate
                          #print("save sample "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
-                             bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                             print("added padd - check this works")
+                             # change to percentage 
+                             Zp = int(((np.amax(Z) - np.amin(Z))*0.05)/2)
+                             Zmin = np.amin(Z) - Zp
+                             Zmax = np.amax(Z) + Zp
+                             
+                             Yp = int(((np.amax(Y) - np.amin(Y))*0.05)/2)
+                             Ymin = np.amin(Y) - Yp
+                             Ymax = np.amax(Y) + Yp
+                             
+                             Xp = int(((np.amax(X) - np.amin(X))*0.05)/2)
+                             Xmin = np.amin(X) - Xp
+                             Xmax = np.amax(X) + Xp
+                             bounds.append((Zmin+start,Zmax+start,Ymin+start,Ymax+start,Xmin+start,Xmax+start))
+                             #bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                              sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
+                             #bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
+                             #sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
          if len(self.layers) > 0:
              self.flipPlateVer()
@@ -566,7 +590,7 @@ class MiTiSegmenter(tk.Tk):
                  if len(self.layers) > 0:
                      sampleName = gridNames[i]
                  else: 
-                     sampleName = 'sample'+ str(i)
+                     sampleName = 'sample_'+ str(i+1).zfill(len(str(len(bounds)))+1)#put the len of bounds to a string, get that strings length +1 for 0 padding
                  print(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName))
                  if os.path.isdir(self.workingPath + '/'+"MiTiSegmenter" + '/' + str(sampleName) ) == False:
                      os.mkdir(self.workingPath + '/'+"MiTiSegmenter"+ '/' + str(sampleName))  
