@@ -119,7 +119,7 @@ class MiTiSegmenter(tk.Tk):
             # setup base layers
             self.putGridOnImage(np.zeros((self.imageStack.shape[1],self.imageStack.shape[2])), self.layers[i])
             self.updateTop(self.layers[i])
-            cv.setTrackPos("image", "Z" ,self.layers[i])
+            cv.setTrackbarPos("image", "Z" ,self.layers[i])
         self.refreshImages()
          
     def addPlate(self, listbox):
@@ -130,8 +130,7 @@ class MiTiSegmenter(tk.Tk):
         items = list(items)
         ints = []
         self.layers.append(self.slides[2])
-        #print(self.layers)
-        
+
         # place sorted values back into the list box
         for i in range(len(items)):
             if int(items[i].split("_")[1]) not in ints:
@@ -170,7 +169,6 @@ class MiTiSegmenter(tk.Tk):
                     cv.imshow("loading",img) 
                     cv.waitKey(1)
                     cv.imwrite(self.workingPath+'/plate' + str(i)+'/'+str(o).zfill(6)+".tiff", img) 
-                    #showinfo("path = " + self.workingPath+'/plate' + str(i)+'/'+str(o).zfill(6)+".tiff")
                     infoFile.write('"' + str(i).zfill(6)+".tiff" +'" ' + str(self.imagesHeightSlice[o]-self.imagesHeightSlice[startLast]) +"\n")
                     lastOn = o
             else:
@@ -184,7 +182,6 @@ class MiTiSegmenter(tk.Tk):
             infoFile.close()
         if self.RawPath:
             image.close()
-        #showinfo("Exported", "The plates have been exported")
         res = askquestion("Exported", "The plates have been successfully exported as separate image stacks. Would you like to import one now?")
         if res == "yes":
             #self.__init__()
@@ -285,38 +282,6 @@ class MiTiSegmenter(tk.Tk):
             return 
         try:
             print(folders)
-            """if folders == "Processed_files" or folders == "Segmentation_masks":
-                #img = morphology.remove_small_objects(img.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
-                # biggest blob only
-                img[img != 0] == 1
-                img = measure.label(img)
-                rand_un = np.unique(img,return_counts=True)
-                max_val = 0
-                for i in range(len(rand_un[0])):
-                    if rand_un[0][i] != 0:
-                        if rand_un[1][i] > max_val:
-                            max_val = rand_un[0][i]
-                img[img != max_val] = 0"""
-            # Pass xyz to Open3D.o3d.geometry.PointCloud and visualize
-            """print("make point cloud")
-            pcd = o3d.geometry.PointCloud()
-            print("point cloud obj")
-            pcd.points = o3d.utility.Vector3dVector(np.argwhere(img != 0))
-            print("point cloud object")
-            #o3d.visualization.draw_geometries([pcd])
-            #print("visualise")
-            pcd.estimate_normals()
-            print("get normals")
-            distances = 1# pcd.compute_nearest_neighbor_distance() worked out to 1.000013808319598
-            print("get distance")
-            avg_dist = distances#np.mean(distances)
-            print(avg_dist)
-            radius = 3 * avg_dist
-            print("make mesh")
-            bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
-            print("save mesh")
-            o3d.io.write_triangle_mesh(path+'/'+os.path.basename(os.path.dirname(path))+".ply", poisson_mesh)"""
-            #o3d.io.write_point_cloud("../../test_data/sync.ply", pcd)
             verts, faces, normals, values = measure.marching_cubes_lewiner((img != 0), 0)#fit this into the model from open3d
             faces=faces+1
             verts  = verts- (verts.min(axis=0)+verts.max(axis=0))//2 
@@ -478,7 +443,6 @@ class MiTiSegmenter(tk.Tk):
                                   X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
                                   # padd the bound by the down sample rate
                                   if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
-                                      print("added padd - check this works")
                                       # change to percentage 
                                       Zp = int(((np.amax(Z) - np.amin(Z))*0.05)/2)
                                       Zmin = np.amin(Z) - Zp
@@ -492,7 +456,6 @@ class MiTiSegmenter(tk.Tk):
                                       Xmin = np.amin(X) - Xp
                                       Xmax = np.amax(X) + Xp
                                       bounds.append((Zmin+start,Zmax+start,Ymin+start,Ymax+start,Xmin+start,Xmax+start))
-                                      #bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                                       sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                                   else:
                                       print("Error in exportation, your image is on the bounds")
@@ -505,15 +468,12 @@ class MiTiSegmenter(tk.Tk):
                      print("first end " +str(i))
                      stack[stack != 0] = 1 
                      stack = morphology.remove_small_objects(stack.astype(bool), min_size=(self.sampleMinSizeVal)).astype("uint8")
-                     #stack = measure.label(stack)
-                     # must be bigger then a 3*3 matrix to do labeling
                      if len(stack.shape) < 3: 
                         stack = None
                         continue
                      elif stack.shape[2] < 4 or stack.shape[1] < 4 or stack.shape[0] < 4:
                         stack = None
                         continue
-                     #stack = measure.label(stack)
                      stack = ndmeasure.label(stack,np.ones((3,3,3)))[0].compute()
                      unique = np.unique(stack)
                      for o in range(unique.shape[0]):  
@@ -521,13 +481,11 @@ class MiTiSegmenter(tk.Tk):
                              continue
                          currentBlob = np.where(stack == unique[o])
                          
-                         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1)) # was i then start now its i again
-                         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))#*self.downsampleFactor
-                         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))#*self.downsampleFactor
+                         Z = currentBlob[0].reshape((currentBlob[0].shape[0],1))
+                         Y = currentBlob[1].reshape((currentBlob[1].shape[0],1))
+                         X = currentBlob[2].reshape((currentBlob[2].shape[0],1))
                          # padd the bound by the down sample rate
-                         #print("save sample "+ str(start))
                          if (np.amax(Z) - np.amin(Z) > self.sampleMinSizeVal and np.amax(Y) - np.amin(Y) > self.sampleMinSizeVal and np.amax(X) - np.amin(X) > self.sampleMinSizeVal):
-                             print("added padd - check this works")
                              # change to percentage 
                              Zp = int(((np.amax(Z) - np.amin(Z))*0.05)/2)
                              Zmin = np.amin(Z) - Zp
@@ -541,10 +499,7 @@ class MiTiSegmenter(tk.Tk):
                              Xmin = np.amin(X) - Xp
                              Xmax = np.amax(X) + Xp
                              bounds.append((Zmin+start,Zmax+start,Ymin+start,Ymax+start,Xmin+start,Xmax+start))
-                             #bounds.append((np.amin(Z)-self.downsampleFactor+start,np.amax(Z)+self.downsampleFactor+start,np.amin(Y)-self.downsampleFactor,np.amax(Y)+self.downsampleFactor,np.amin(X)-self.downsampleFactor,np.amax(X)+self.downsampleFactor))  
                              sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
-                             #bounds.append((np.amin(Z)+start,np.amax(Z)+start,np.amin(Y),np.amax(Y),np.amin(X),np.amax(X)))  
-                             #sampleCenters.append( ( (np.amin(Z)+np.amax(Z)+(start))//2, (np.amin(Y)+np.amax(Y))//2, (np.amin(X)+np.amax(X))//2 ))
                      stack = None
          if len(self.layers) > 0:
              self.flipPlateVer()
@@ -739,8 +694,7 @@ class MiTiSegmenter(tk.Tk):
                 offsetX = float(temp[1])
                 offsetY = float(temp[2])
             elif temp.startswith('"'):
-                temp = temp.split('"') 
-                #temp = temp.replace('"','') 
+                temp = temp.split('"')
                 imagePaths.append(temp[1].replace('"',''))
                 imagesHeightSlice.append(float(temp[2])) 
         #imgstk = None
@@ -761,26 +715,22 @@ class MiTiSegmenter(tk.Tk):
         
     def loadRawStack(self):
         path = filedialog.askopenfilename(filetypes = (("raw files","*.raw"),("all files","*.*")))
-        #print(path)
         if path == "": 
             return False
         self.imageStack = None
         self.workingPath = os.path.dirname(path)
-        #print(self.workingPath)
         self.RawPath = path
         self.resPopUp = DownsampleWindow(self.master) 
         self.wait_window(self.resPopUp.top)
         dsample = self.resPopUp.value 
         if len(dsample) < 1: 
             dsample = 1
-            #print(dsample)
             return False
         self.downsampleFactor = int(dsample)
         self.resPopUp = RawInfoWindow(self.master) 
         self.wait_window(self.resPopUp.top)  
         resolution = self.resPopUp.value.split(";") 
         if len(resolution) < 4: 
-            #print("false res")
             return False
         resolution[0] = int(resolution[0])
         resolution[1] = int(resolution[1])
@@ -803,8 +753,7 @@ class MiTiSegmenter(tk.Tk):
         for i in range(resolution[2]):
             img = np.fromfile(image, dtype = self.bitType, count = self.img_size)
             img.shape = (resolution[1],resolution[0])
-            #img = img * (np.iinfo(self.bitType).max/img.max())
-            
+
             img = (((img-0.0)/(maxV-0.0))*255).astype("uint8")
             if self.downsampleFactor > 1:
                 img = cv.resize(img,img_res)
@@ -898,7 +847,6 @@ class MiTiSegmenter(tk.Tk):
                 self.offsetY = float(temp[2])
             elif temp.startswith('"'):
                 temp = temp.split('"') 
-                #temp = temp.replace('"','') 
                 self.imagePaths.append(temp[1].replace('"',''))
                 self.imagesHeightSlice.append(float(temp[2])) 
         self.pixelSizeZ = self.imagesHeightSlice[1]
@@ -921,7 +869,7 @@ class MiTiSegmenter(tk.Tk):
     def setInitGraphs(self):
         self.imgTop = self.imageStack[0,:,:]
         self.gridSize = ( ((self.imgTop.shape[0]//10)*9)//2, ((self.imgTop.shape[1]//10)*3)//2)
-        self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
+        #self.gridCenter = (self.imgTop.shape[0]//2,self.imgTop.shape[1]//2)
         self.imgTop = cv.cvtColor(self.imgTop,cv.COLOR_GRAY2RGB)
         self.imgSide = self.imageStack[:,0,:]
         self.imgFront = self.imageStack[:,:,0] 
@@ -947,6 +895,7 @@ class MiTiSegmenter(tk.Tk):
         cv.moveWindow("Z",600,0)
         
         cv.waitKey(1)
+        print("edit values here to ensure the box is done properly")
         self.frames[PlateAlign].MoveGridY.configure(to = self.imgTop.shape[0]*2)
         self.frames[PlateAlign].MoveGridX.configure(to = self.imgTop.shape[1]*2)
         self.frames[PlateAlign].MoveGridY.set(self.imgTop.shape[0])
