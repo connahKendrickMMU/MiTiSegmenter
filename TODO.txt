@@ -5,3 +5,5 @@ Some say the CSV window doesn't always appear, test
 Handle Error when a user cancels on the CSV load
 If could store the first and last value when plating, could have grid appear over full image
 Export tiff stack refactor method too messy
+# todo add plate warning when no cel
+# check what happens to the file after excel
