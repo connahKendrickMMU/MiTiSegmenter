@@ -35,6 +35,9 @@ Please follow the video guide at: https://mmutube.mmu.ac.uk/media/MiTiSegGuide/1
 Guide will require the following data: <br />
 images: https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847 <br />
 Labels: https://figshare.com/articles/dataset/Example_labelling_spreadsheets_to_accompany_MiTiSegmenter/17899916 <br />
+
+Code was made in python 3.8.11
+MiTI.yml contains the full python enviroment settings for anaconda.
 <!--Using MiTiSegmenter should be straightforward when following the workflow provided. This guide provides step-by-step instructions on using the software as intended. We provide an accompanying sample dataset as an example of array-based microCT data, which can be found at [Figshare](https://figshare.com/articles/Example_data_for_MitiSegmenter_software/12349847)
 
 Since the easing of lockdown in the UK has begun, we have manage to get volunteers to tes the software this, has lead to improvements to the GUI  the guide below still follows the same steps, with the removal of having to press some buttons. As we are updating the GUI at a fast pace we recommend looking here: https://www.dropbox.com/s/hw9d8vre3dg12de/MiTiSegmentatorGuide.mp4?dl=0 for a step by step video.once all the tester are happy, we'll redo the whole guide, new videos are made with each update.
