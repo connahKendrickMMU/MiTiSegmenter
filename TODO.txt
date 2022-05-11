@@ -7,3 +7,5 @@ If could store the first and last value when plating, could have grid appear ove
 Export tiff stack refactor method too messy
 # todo add plate warning when no cel
 # check what happens to the file after excel
+if multiplates the crops are not correct, on plating maybe auto export to multiple stacks, check lines 505 and 462 most likely error
+adding plating in seperate stacks causes error in console

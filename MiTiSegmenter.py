@@ -362,6 +362,10 @@ class MiTiSegmenter(tk.Tk):
                  img  = img[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
              else:
                  img = cv.imread(self.workingPath + '/' + self.imagePaths[o],0).astype("uint8")[bounds[p][2]:bounds[p][3], bounds[p][4]:bounds[p][5]]
+             if img is None:
+                 messagebox.show("Image was blank please report this to the github\n program will continue to export the other stacks")
+                 infoFile.close()
+                 return
              if imType == 1: #processed 
                  img = self.ViewImagePreviews(img,1,1,False,self.downsampleFactor,self.thresholdMax,self.thresholdMin,self.cellBase)
              elif imType == 2: # segmentation 
